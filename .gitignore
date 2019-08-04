@@ -137,3 +137,6 @@ project.lock.json
 
 # Visual Studio Code
 .vscode/
+
+# Telegram file
+*.dat
