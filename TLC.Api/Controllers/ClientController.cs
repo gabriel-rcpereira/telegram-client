@@ -20,7 +20,7 @@ namespace TLC.Api.Controllers
             _clientService = clientService;
         }
 
-        [HttpPost("features/messages")]
+        [HttpPost("messages")]
         public async Task<IActionResult> PostForwardMessage([FromBody] TLClientRequest clientRequest)
         {
             ClientVo clientVo = CreateClientVo(clientRequest);
@@ -29,7 +29,7 @@ namespace TLC.Api.Controllers
             return Ok();
         }
 
-        [HttpPost("features/contacts")]
+        [HttpPost("contacts")]
         public async Task<IActionResult> PostRequestContacts([FromBody] TLClientRequest clientRequest)
         {
             ClientVo clientVo = CreateClientVo(clientRequest);
