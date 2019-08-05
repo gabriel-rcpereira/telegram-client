@@ -15,14 +15,12 @@ namespace TLC.Api.Services
     {
         private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
 
-        private TelegramClient _client;
-
         public TLClientService() { }
 
         async Task ITLClientService.ForwardTodayMessageAsync(ClientVo clientVo)
         {
-            _client = NewClient(clientVo.Account.Id, clientVo.Account.Hash);
-            await _client.ConnectAsync();
+            var client = NewClient(clientVo.Account.Id, clientVo.Account.Hash);
+            await client.ConnectAsync();
 
             var messageSentToday = await GetLastMessageSentTodayAsync(clientVo.FromUser.Id);
 
@@ -30,17 +28,17 @@ namespace TLC.Api.Services
             {
                 clientVo.ToUsers.ToList()
                     .ForEach(user => 
-                        _client.SendMessageAsync(CreateUser(user.Id), 
+                        client.SendMessageAsync(CreateUser(user.Id), 
                             messageSentToday.Message));
             }
         }
 
         async Task<IEnumerable<ContactResponse>> ITLClientService.GetContacts(ClientVo clientVo)
         {
-            _client = NewClient(clientVo.Account.Id, clientVo.Account.Hash);
-            await _client.ConnectAsync();
+            var client = NewClient(clientVo.Account.Id, clientVo.Account.Hash);
+            await client.ConnectAsync();
 
-            var contacts = await _client.GetContactsAsync();
+            var contacts = await client.GetContactsAsync();
             if (contacts != null)
             {
                 return contacts.Users
@@ -72,7 +70,7 @@ namespace TLC.Api.Services
 
         private async Task<TLMessage> GetLastMessageSentTodayAsync(int contactFromId)
         {
-            var dialogs = (TLDialogs)await _client.GetUserDialogsAsync();
+            var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
 
             if (dialogs == null)
             {
