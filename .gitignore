@@ -140,3 +140,6 @@ project.lock.json
 
 # Telegram file
 *.dat
+
+# Development stuff
+*.development.json
