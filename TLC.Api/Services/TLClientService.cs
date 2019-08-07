@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TLC.Api.Configuration.Telegram;
 using TLC.Api.Models.Responses;
 using TLC.Api.Models.Vo;
 using TLC.Api.Services.Contracts;
@@ -15,27 +16,33 @@ namespace TLC.Api.Services
     {
         private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
 
-        public TLClientService() { }
+        private readonly Client _client;
 
-        async Task ITLClientService.ForwardTodayMessageAsync(ClientVo clientVo)
+        public TLClientService(Client client)
         {
-            var client = NewClient(clientVo.Account.Id, clientVo.Account.Hash);
-            await client.ConnectAsync();
+            _client = client;
+        }
 
-            var messageSentToday = await GetLastMessageSentTodayAsync(clientVo.FromUser.Id);
+        async Task ITLClientService.ForwardDailyMessageAsync()
+        {
+            var client = NewClient(_client.Account.Id, _client.Account.Hash);
+            await client.ConnectAsync();
+            
+            var messageSentToday = FilterLastMessageSentTodayAsync(_client.FromUser.Id,
+                (TLDialogs)await client.GetUserDialogsAsync());
 
             if (messageSentToday != null)
             {
-                clientVo.ToUsers.ToList()
+                _client.ToUsers.ToList()
                     .ForEach(user => 
                         client.SendMessageAsync(CreateUser(user.Id), 
                             messageSentToday.Message));
             }
         }
 
-        async Task<IEnumerable<ContactResponse>> ITLClientService.GetContacts(ClientVo clientVo)
+        async Task<IEnumerable<ContactResponse>> ITLClientService.FindContactsAsync()
         {
-            var client = NewClient(clientVo.Account.Id, clientVo.Account.Hash);
+            var client = NewClient(_client.Account.Id, _client.Account.Hash);
             await client.ConnectAsync();
 
             var contacts = await client.GetContactsAsync();
@@ -47,6 +54,13 @@ namespace TLC.Api.Services
             }
 
             return new List<ContactResponse>();
+        }
+
+        async Task ITLClientService.SendCodeRequestToClientAsync()
+        {
+            var client = NewClient(_client.Account.Id, _client.Account.Hash);
+            await client.ConnectAsync();
+            await client.SendCodeRequestAsync(_client.FromUser.PhoneNumber);
         }
 
         private ContactResponse CreateContactResponse(TLUser user)
@@ -68,10 +82,8 @@ namespace TLC.Api.Services
             return new TLInputPeerUser() { UserId = userId };
         }
 
-        private async Task<TLMessage> GetLastMessageSentTodayAsync(int contactFromId)
+        private TLMessage FilterLastMessageSentTodayAsync(int contactFromId, TLDialogs dialogs)
         {
-            var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
-
             if (dialogs == null)
             {
                 return null;
