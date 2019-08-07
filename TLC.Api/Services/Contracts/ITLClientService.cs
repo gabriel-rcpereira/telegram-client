@@ -7,7 +7,8 @@ namespace TLC.Api.Services.Contracts
 {
     public interface ITLClientService
     {
-        Task ForwardTodayMessageAsync(ClientVo clientVo);
-        Task<IEnumerable<ContactResponse>> GetContacts(ClientVo clientVo);
+        Task ForwardDailyMessageAsync();
+        Task<IEnumerable<ContactResponse>> FindContactsAsync();
+        Task SendCodeRequestToClientAsync();
     }
 }

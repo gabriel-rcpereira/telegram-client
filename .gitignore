@@ -142,4 +142,4 @@ project.lock.json
 *.dat
 
 # Development stuff
-*.development.json
+appsettings.Development.json
