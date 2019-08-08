@@ -28,7 +28,7 @@ namespace TLC.Api
             services.Configure<Client>(_configuration.GetSection(TelegramConfiguration).GetSection(ClientConfiguration));
             
             // IoD
-            services.AddTransient<Services.Contracts.ITLClientService, Services.TLClientService>();
+            services.AddTransient<Services.Contracts.IClientService, Services.ClientService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

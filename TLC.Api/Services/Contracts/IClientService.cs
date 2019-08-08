@@ -4,11 +4,11 @@ using TLC.Api.Models.Responses;
 
 namespace TLC.Api.Services.Contracts
 {
-    public interface ITLClientService
+    public interface IClientService
     {
         Task ForwardDailyMessageAsync();
         Task<IEnumerable<ContactResponse>> FindContactsAsync();
-        Task SendCodeRequestToClientAsync();
+        Task<ClientResponse> SendCodeRequestToClientAsync();
         Task ReceiveCodeRequestedAsync(string phoneCodeHash, string code);
     }
 }

@@ -1,45 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace TLC.Api.Models.Responses
+﻿namespace TLC.Api.Models.Responses
 {
-    public class ContactResponse
+    public class ClientResponse
     {
-        public int Id { get; set; }
+        public string PhoneCodeHash { get; private set; }
 
-        public string FirstName { get; private set; }
-
-        public string LastName { get; private set; }
-
-        private ContactResponse() { }
+        private ClientResponse() { }
 
         public class Builder
         {
-            private ContactResponse _contactResponse = new ContactResponse();
+            private ClientResponse _clientResponse = new ClientResponse();
 
-            public Builder WithId(int id)
+            public Builder WithPhoneCodeHash(string phoneCodeHash)
             {
-                _contactResponse.Id = id;
+                _clientResponse.PhoneCodeHash = phoneCodeHash;
                 return this;
             }
 
-            public Builder WithFirstName(string firstName)
+            public ClientResponse Build()
             {
-                _contactResponse.FirstName = firstName;
-                return this;
-            }
-
-            public Builder WithLastName(string lastName)
-            {
-                _contactResponse.LastName = lastName;
-                return this;
-            }
-
-            public ContactResponse Build()
-            {
-                return _contactResponse;
+                return _clientResponse;
             }
         }
     }

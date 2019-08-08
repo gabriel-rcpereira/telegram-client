@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
+using TLC.Api.Controllers;
 using TLC.Api.Models.Responses;
 using TLC.Api.Services.Contracts;
 using TLSchema;
@@ -11,37 +12,37 @@ using TLSharp;
 
 namespace TLC.Api.Services
 {
-    public class TLClientService : ITLClientService
+    public class ClientService : IClientService
     {
         private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
 
-        private readonly Client _client;
+        private readonly Client _clientConfiguration;
 
-        public TLClientService(Client client)
+        public ClientService(Client clientConfiguration)
         {
-            _client = client;
+            _clientConfiguration = clientConfiguration;
         }
 
-        async Task ITLClientService.ForwardDailyMessageAsync()
+        async Task IClientService.ForwardDailyMessageAsync()
         {
-            var client = NewClient(_client.Account.Id, _client.Account.Hash);
+            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
             await client.ConnectAsync();
             
-            var messageSentToday = FilterLastMessageSentToday(_client.FromUser.Id,
+            var messageSentToday = FilterLastMessageSentToday(_clientConfiguration.FromUser.Id,
                 (TLDialogs)await client.GetUserDialogsAsync());
 
             if (messageSentToday != null)
             {
-                _client.ToUsers.ToList()
+                _clientConfiguration.ToUsers.ToList()
                     .ForEach(user => 
                         client.SendMessageAsync(CreateUser(user.Id), 
                             messageSentToday.Message));
             }
         }
 
-        async Task<IEnumerable<ContactResponse>> ITLClientService.FindContactsAsync()
+        async Task<IEnumerable<ContactResponse>> IClientService.FindContactsAsync()
         {
-            var client = NewClient(_client.Account.Id, _client.Account.Hash);
+            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
             await client.ConnectAsync();
 
             var contacts = await client.GetContactsAsync();
@@ -55,17 +56,19 @@ namespace TLC.Api.Services
             return new List<ContactResponse>();
         }
 
-        async Task ITLClientService.SendCodeRequestToClientAsync()
+        async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
         {
-            var client = NewClient(_client.Account.Id, _client.Account.Hash);
+            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
             await client.ConnectAsync();
-            await client.SendCodeRequestAsync(_client.FromUser.PhoneNumber);
+            string phoneCodeHash = await client.SendCodeRequestAsync(_clientConfiguration.FromUser.PhoneNumber);
+
+            return CreateClientResponse(phoneCodeHash);
         }
 
-        async Task ITLClientService.ReceiveCodeRequestedAsync(string phoneCodeHash, string code)
+        async Task IClientService.ReceiveCodeRequestedAsync(string phoneCodeHash, string code)
         {
-            var client = NewClient(_client.Account.Id, _client.Account.Hash);
-            await client.MakeAuthAsync(_client.FromUser.PhoneNumber, phoneCodeHash, code);
+            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
+            await client.MakeAuthAsync(_clientConfiguration.FromUser.PhoneNumber, phoneCodeHash, code);
         }
 
         private ContactResponse CreateContactResponse(TLUser user)
@@ -75,6 +78,13 @@ namespace TLC.Api.Services
                                     .WithFirstName(user.FirstName)
                                     .WithLastName(user.LastName)
                                     .Build();
+        }
+        
+        private static ClientResponse CreateClientResponse(string phoneCodeHash)
+        {
+            return new ClientResponse.Builder()
+                            .WithPhoneCodeHash(phoneCodeHash)
+                            .Build();
         }
 
         private TelegramClient NewClient(int id, string hash)
