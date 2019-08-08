@@ -4,6 +4,6 @@
     {
         public string Code { get; set; }
 
-        public string PhoneCodeHash { get; internal set; }
+        public string PhoneCodeHash { get; set; }
     }
 }
