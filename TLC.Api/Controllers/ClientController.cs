@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using TLC.Api.Models.Requests;
 using TLC.Api.Services.Contracts;
 
 namespace TLC.Api.Controllers
@@ -32,6 +33,13 @@ namespace TLC.Api.Controllers
         public async Task<IActionResult> PostSendCodeRequestToClientAsync()
         {
             await _clientService.SendCodeRequestToClientAsync();
+            return Ok();
+        }
+
+        [HttpPut("codes")]
+        public async Task<IActionResult> PutReceiveCodeRequestedAsync([FromBody] ClientRequest clientRequest)
+        {
+            await _clientService.ReceiveCodeRequestedAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }
     }
