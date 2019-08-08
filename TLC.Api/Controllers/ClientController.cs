@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TLC.Api.Models.Requests;
 using TLC.Api.Models.Responses;
@@ -19,16 +20,11 @@ namespace TLC.Api.Controllers
         }
 
         [HttpPost("messages")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> PostForwardDailyMessageAsync()
         {
             await _clientService.ForwardDailyMessageAsync();
             return Ok();
-        }
-
-        [HttpGet("contacts")]
-        public async Task<IActionResult> GetContactsAsync()
-        {
-            return Ok(await _clientService.FindContactsAsync());
         }
 
         [HttpPost("codes")]
@@ -39,10 +35,18 @@ namespace TLC.Api.Controllers
         }
 
         [HttpPut("codes")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> PutReceiveCodeRequestedAsync([FromBody] ClientRequest clientRequest)
         {
             await _clientService.ReceiveCodeRequestedAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }
+
+        [HttpGet("contacts")]
+        [ProducesResponseType(typeof(IEnumerable<ContactResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetContactsAsync()
+        {
+            return Ok(await _clientService.FindContactsAsync());
+        }       
     }
 }
