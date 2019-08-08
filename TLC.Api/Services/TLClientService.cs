@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
 using TLC.Api.Models.Responses;
-using TLC.Api.Models.Vo;
 using TLC.Api.Services.Contracts;
 using TLSchema;
 using TLSchema.Messages;
@@ -28,7 +27,7 @@ namespace TLC.Api.Services
             var client = NewClient(_client.Account.Id, _client.Account.Hash);
             await client.ConnectAsync();
             
-            var messageSentToday = FilterLastMessageSentTodayAsync(_client.FromUser.Id,
+            var messageSentToday = FilterLastMessageSentToday(_client.FromUser.Id,
                 (TLDialogs)await client.GetUserDialogsAsync());
 
             if (messageSentToday != null)
@@ -63,6 +62,12 @@ namespace TLC.Api.Services
             await client.SendCodeRequestAsync(_client.FromUser.PhoneNumber);
         }
 
+        async Task ITLClientService.ReceiveCodeRequestedAsync(string phoneCodeHash, string code)
+        {
+            var client = NewClient(_client.Account.Id, _client.Account.Hash);
+            await client.MakeAuthAsync(_client.FromUser.PhoneNumber, phoneCodeHash, code);
+        }
+
         private ContactResponse CreateContactResponse(TLUser user)
         {
             return new ContactResponse.Builder()
@@ -82,7 +87,7 @@ namespace TLC.Api.Services
             return new TLInputPeerUser() { UserId = userId };
         }
 
-        private TLMessage FilterLastMessageSentTodayAsync(int contactFromId, TLDialogs dialogs)
+        private TLMessage FilterLastMessageSentToday(int contactFromId, TLDialogs dialogs)
         {
             if (dialogs == null)
             {

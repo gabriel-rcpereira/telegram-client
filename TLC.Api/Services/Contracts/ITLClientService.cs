@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using TLC.Api.Models.Responses;
-using TLC.Api.Models.Vo;
 
 namespace TLC.Api.Services.Contracts
 {
@@ -10,5 +9,6 @@ namespace TLC.Api.Services.Contracts
         Task ForwardDailyMessageAsync();
         Task<IEnumerable<ContactResponse>> FindContactsAsync();
         Task SendCodeRequestToClientAsync();
+        Task ReceiveCodeRequestedAsync(string phoneCodeHash, string code);
     }
 }
