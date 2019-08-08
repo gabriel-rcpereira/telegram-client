@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
@@ -40,22 +39,6 @@ namespace TLC.Api.Services
             }
         }
 
-        async Task<IEnumerable<ContactResponse>> IClientService.FindContactsAsync()
-        {
-            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
-            await client.ConnectAsync();
-
-            var contacts = await client.GetContactsAsync();
-            if (contacts != null)
-            {
-                return contacts.Users
-                    .OfType<TLUser>()
-                    .Select(user => CreateContactResponse(user));
-            }
-
-            return new List<ContactResponse>();
-        }
-
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
         {
             var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
@@ -70,15 +53,6 @@ namespace TLC.Api.Services
             var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
             await client.ConnectAsync();
             await client.MakeAuthAsync(_clientConfiguration.Account.PhoneNumber, phoneCodeHash, code);
-        }
-
-        private ContactResponse CreateContactResponse(TLUser user)
-        {
-            return new ContactResponse.Builder()
-                                    .WithId(user.Id)
-                                    .WithFirstName(user.FirstName)
-                                    .WithLastName(user.LastName)
-                                    .Build();
         }
         
         private static ClientResponse CreateClientResponse(string phoneCodeHash)

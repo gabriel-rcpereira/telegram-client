@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TLC.Api.Configuration.Telegram;
+using TLC.Api.Factories;
+using TLC.Api.Factories.Contracts;
+using TLC.Api.Services;
+using TLC.Api.Services.Contracts;
 
 namespace TLC.Api
 {
@@ -28,8 +32,9 @@ namespace TLC.Api
             services.Configure<Client>(_configuration.GetSection(TelegramConfiguration).GetSection(ClientConfiguration));
             
             // IoD
-            services.AddTransient<Services.Contracts.IClientService, Services.ClientService>();
-            services.AddTransient<Services.Contracts.IContactService, Services.ContactService>();
+            services.AddTransient<IClientService, ClientService>();
+            services.AddTransient<IContactService, ContactService>();
+            services.AddTransient<ITelegramClientFactory, TelegramClientFactory>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
