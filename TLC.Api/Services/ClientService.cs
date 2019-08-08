@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
-using TLC.Api.Controllers;
 using TLC.Api.Models.Responses;
 using TLC.Api.Services.Contracts;
 using TLSchema;
@@ -18,9 +18,9 @@ namespace TLC.Api.Services
 
         private readonly Client _clientConfiguration;
 
-        public ClientService(Client clientConfiguration)
+        public ClientService(IOptions<Client> clientConfiguration)
         {
-            _clientConfiguration = clientConfiguration;
+            _clientConfiguration = clientConfiguration.Value;
         }
 
         async Task IClientService.ForwardDailyMessageAsync()
@@ -60,7 +60,7 @@ namespace TLC.Api.Services
         {
             var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
             await client.ConnectAsync();
-            string phoneCodeHash = await client.SendCodeRequestAsync(_clientConfiguration.FromUser.PhoneNumber);
+            string phoneCodeHash = await client.SendCodeRequestAsync(_clientConfiguration.Account.PhoneNumber);
 
             return CreateClientResponse(phoneCodeHash);
         }
@@ -68,7 +68,8 @@ namespace TLC.Api.Services
         async Task IClientService.ReceiveCodeRequestedAsync(string phoneCodeHash, string code)
         {
             var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
-            await client.MakeAuthAsync(_clientConfiguration.FromUser.PhoneNumber, phoneCodeHash, code);
+            await client.ConnectAsync();
+            await client.MakeAuthAsync(_clientConfiguration.Account.PhoneNumber, phoneCodeHash, code);
         }
 
         private ContactResponse CreateContactResponse(TLUser user)
