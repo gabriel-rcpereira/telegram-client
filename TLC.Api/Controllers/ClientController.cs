@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TLC.Api.Models.Requests;
+using TLC.Api.Models.Responses;
 using TLC.Api.Services.Contracts;
 
 namespace TLC.Api.Controllers
@@ -9,9 +11,9 @@ namespace TLC.Api.Controllers
     [ApiController]
     public class ClientController : ControllerBase
     {
-        private readonly ITLClientService _clientService;
+        private readonly IClientService _clientService;
 
-        public ClientController(ITLClientService clientService)
+        public ClientController(IClientService clientService)
         {
             _clientService = clientService;
         }
@@ -30,10 +32,10 @@ namespace TLC.Api.Controllers
         }
 
         [HttpPost("codes")]
+        [ProducesResponseType(typeof(ClientResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> PostSendCodeRequestToClientAsync()
         {
-            await _clientService.SendCodeRequestToClientAsync();
-            return Ok();
+            return Ok(await _clientService.SendCodeRequestToClientAsync());
         }
 
         [HttpPut("codes")]
