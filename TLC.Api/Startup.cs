@@ -29,6 +29,7 @@ namespace TLC.Api
             
             // IoD
             services.AddTransient<Services.Contracts.IClientService, Services.ClientService>();
+            services.AddTransient<Services.Contracts.IContactService, Services.ContactService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

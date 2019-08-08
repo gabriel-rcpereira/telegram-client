@@ -41,12 +41,5 @@ namespace TLC.Api.Controllers
             await _clientService.ReceiveCodeRequestedAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }
-
-        [HttpGet("contacts")]
-        [ProducesResponseType(typeof(IEnumerable<ContactResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetContactsAsync()
-        {
-            return Ok(await _clientService.FindContactsAsync());
-        }       
     }
 }
