@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
 using TLC.Api.Factories.Contracts;
+using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
 using TLC.Api.Services.Contracts;
 using TLSchema;
@@ -13,41 +14,30 @@ namespace TLC.Api.Services
 {
     public class ContactService : IContactService
     {
-        private readonly ITelegramClientFactory _telegramClientFactory;
+        private readonly ITelegramHelper _telegramHelper;
         private readonly Client _clientConfiguration;
 
-        public ContactService(ITelegramClientFactory telegramClientFactory, 
+        public ContactService(ITelegramHelper telegramHelper, 
             IOptions<Client> clientConfiguration)
         {
-            _telegramClientFactory = telegramClientFactory;
+            _telegramHelper = telegramHelper;
             _clientConfiguration = clientConfiguration.Value;
         }
 
         async Task<IEnumerable<ContactResponse>> IContactService.FindContactsAsync()
         {
-            var client = _telegramClientFactory.CreateTelegramClient(_clientConfiguration.Account.Id, 
-                _clientConfiguration.Account.Hash);
-            await client.ConnectAsync();
-
-            var contacts = await client.GetContactsAsync();
-            if (contacts != null)
-            {
-                return contacts.Users
-                    .OfType<TLUser>()
-                    .Select(user => CreateContactResponse(user));
-            }
-
-            return new List<ContactResponse>();
+            var telegramContacts = await _telegramHelper
+                .FindContactsAsync(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
+            return telegramContacts.Select(contact => CreateContactResponse(contact));            
         }
 
-        private ContactResponse CreateContactResponse(TLUser user)
+        private ContactResponse CreateContactResponse(TelegramContactResponse telegramContactResponse)
         {
             return new ContactResponse.Builder()
-                                    .WithId(user.Id)
-                                    .WithFirstName(user.FirstName)
-                                    .WithLastName(user.LastName)
-                                    .Build();
+                .WithId(telegramContactResponse.Id)
+                .WithFirstName(telegramContactResponse.FirstName)
+                .WithLastName(telegramContactResponse.LastName)
+                .Build();
         }
-
     }
 }

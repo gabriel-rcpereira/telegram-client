@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using TLC.Api.Configuration.Telegram;
 using TLC.Api.Factories;
 using TLC.Api.Factories.Contracts;
+using TLC.Api.Helpers;
+using TLC.Api.Helpers.Contracts;
 using TLC.Api.Services;
 using TLC.Api.Services.Contracts;
 
@@ -35,6 +37,7 @@ namespace TLC.Api
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IContactService, ContactService>();
             services.AddTransient<ITelegramClientFactory, TelegramClientFactory>();
+            services.AddTransient<ITelegramHelper, TelegramHelper>();            
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
