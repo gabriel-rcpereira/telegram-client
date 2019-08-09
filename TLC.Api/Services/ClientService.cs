@@ -3,6 +3,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
+using TLC.Api.Factories.Contracts;
+using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
 using TLC.Api.Services.Contracts;
 using TLSchema;
@@ -16,15 +18,21 @@ namespace TLC.Api.Services
         private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
 
         private readonly Client _clientConfiguration;
+        private readonly ITelegramClientFactory _telegramClientFactory;
+        private readonly ITelegramHelper _telegramHelper;
 
-        public ClientService(IOptions<Client> clientConfiguration)
+        public ClientService(IOptions<Client> clientConfiguration,
+            ITelegramClientFactory telegramClientFactory,
+            ITelegramHelper telegramHelper)
         {
             _clientConfiguration = clientConfiguration.Value;
+            _telegramClientFactory = telegramClientFactory;
+            _telegramHelper = telegramHelper;
         }
 
         async Task IClientService.ForwardDailyMessageAsync()
         {
-            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
+            var client = _telegramClientFactory.CreateTelegramClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
             await client.ConnectAsync();
             
             var messageSentToday = FilterLastMessageSentToday(_clientConfiguration.FromUser.Id,
@@ -41,30 +49,25 @@ namespace TLC.Api.Services
 
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
         {
-            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
-            await client.ConnectAsync();
-            string phoneCodeHash = await client.SendCodeRequestAsync(_clientConfiguration.Account.PhoneNumber);
+            var telegramCodeResponse = await _telegramHelper.SendCodeRequestToClientAsync(_clientConfiguration.Account.Id,
+                _clientConfiguration.Account.Hash,
+                _clientConfiguration.Account.PhoneNumber);
 
-            return CreateClientResponse(phoneCodeHash);
+            return BuildClientResponse(telegramCodeResponse);
         }
 
         async Task IClientService.ReceiveCodeRequestedAsync(string phoneCodeHash, string code)
         {
-            var client = NewClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
+            var client = _telegramClientFactory.CreateTelegramClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
             await client.ConnectAsync();
             await client.MakeAuthAsync(_clientConfiguration.Account.PhoneNumber, phoneCodeHash, code);
         }
         
-        private static ClientResponse CreateClientResponse(string phoneCodeHash)
+        private static ClientResponse BuildClientResponse(TelegramCodeResponse telegramCodeResponse)
         {
             return new ClientResponse.Builder()
-                            .WithPhoneCodeHash(phoneCodeHash)
-                            .Build();
-        }
-
-        private TelegramClient NewClient(int id, string hash)
-        {
-            return new TelegramClient(id, hash);
+                .WithPhoneCodeHash(telegramCodeResponse.PhoneHashCode)
+                .Build();
         }
 
         private static TLInputPeerUser CreateUser(int userId)

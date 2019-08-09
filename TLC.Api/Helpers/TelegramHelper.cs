@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Helpers.Contracts;
@@ -25,6 +24,20 @@ namespace TLC.Api.Helpers
             }
 
             return new List<TelegramContactResponse>();
+        }
+
+        async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(int id, string hash, string phoneNumber)
+        {
+            var client = NewClient(id, hash);
+            await client.ConnectAsync();
+            return BuildTelegramCodeResponse(await client.SendCodeRequestAsync(phoneNumber));
+        }
+
+        private TelegramCodeResponse BuildTelegramCodeResponse(string phoneCodeHash)
+        {
+            return new TelegramCodeResponse.Builder()
+                .WithPhoneHashCode(phoneCodeHash)
+                .Build();
         }
 
         private TelegramContactResponse BuildTelegramResponse(TLUser user)
