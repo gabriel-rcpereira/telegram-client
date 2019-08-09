@@ -44,11 +44,9 @@ namespace TLC.Api.Services
             return BuildClientResponse(telegramCodeResponse);
         }
 
-        async Task IClientService.ReceiveCodeRequestedAsync(string phoneCodeHash, string code)
+        async Task IClientService.UpdateCodeAsync(string phoneCodeHash, string code)
         {
-            var client = _telegramClientFactory.CreateTelegramClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
-            await client.ConnectAsync();
-            await client.MakeAuthAsync(_clientConfiguration.Account.PhoneNumber, phoneCodeHash, code);
+            await _telegramHelper.UpdateCodeAsync(BuildTelegramHelperVo(phoneCodeHash, code));
         }
         
         private static ClientResponse BuildClientResponse(TelegramCodeResponse telegramCodeResponse)
@@ -58,15 +56,24 @@ namespace TLC.Api.Services
                 .Build();
         }
 
-        private TelegramHelperVo BuildTelegramHelperVo()
+        private TelegramHelperVo BuildTelegramHelperVo(string phoneCodeHash = "", string code = "")
         {
             return new TelegramHelperVo.Builder()
                 .WithAccountVo(BuildAccountVo())
                 .WithFromUserVo(BuildFromUserVo())
-                .WithToUsers(BuildToUsersVo())
+                .WithToUsersVo(BuildToUsersVo())
+                .WithConnectionVo(BuildConnectionVo(phoneCodeHash, code))
                 .Build();
         }
 
+        private ConnectionVo BuildConnectionVo(string phoneCodeHash, string code)
+        {
+            return new ConnectionVo.Builder()
+                .WithPhoneCodeHash(phoneCodeHash)
+                .WithCode(code)
+                .Build();
+        }
+        
         private IEnumerable<UserVo> BuildToUsersVo()
         {
             return _clientConfiguration.ToUsers.Select(user =>
@@ -90,6 +97,7 @@ namespace TLC.Api.Services
             return new AccountVo.Builder()
                 .WithId(_clientConfiguration.Account.Id)
                 .WithHash(_clientConfiguration.Account.Hash)
+                .WithPhoneNumber(_clientConfiguration.Account.PhoneNumber)
                 .Build();
         }
     }

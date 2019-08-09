@@ -7,6 +7,6 @@ namespace TLC.Api.Services.Contracts
     {
         Task ForwardDailyMessageAsync();
         Task<ClientResponse> SendCodeRequestToClientAsync();
-        Task ReceiveCodeRequestedAsync(string phoneCodeHash, string code);
+        Task UpdateCodeAsync(string phoneCodeHash, string code);
     }
 }

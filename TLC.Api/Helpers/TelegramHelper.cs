@@ -102,5 +102,14 @@ namespace TLC.Api.Helpers
             long ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
             return Convert.ToDouble(ticks /= 10000000);
         }
+
+        async Task ITelegramHelper.UpdateCodeAsync(TelegramHelperVo telegramHelperVo)
+        {
+            var client = NewClient(telegramHelperVo.AccountVo.Id, telegramHelperVo.AccountVo.Hash);
+            await client.ConnectAsync();
+            await client.MakeAuthAsync(telegramHelperVo.AccountVo.PhoneNumber, 
+                telegramHelperVo.ConnectionVo.PhoneCodeHash, 
+                telegramHelperVo.ConnectionVo.Code);
+        }
     }
 }

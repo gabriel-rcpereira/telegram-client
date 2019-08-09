@@ -38,7 +38,7 @@ namespace TLC.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> PutReceiveCodeRequestedAsync([FromBody] ClientRequest clientRequest)
         {
-            await _clientService.ReceiveCodeRequestedAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
+            await _clientService.UpdateCodeAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }
     }

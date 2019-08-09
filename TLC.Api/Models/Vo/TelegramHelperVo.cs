@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace TLC.Api.Models.Vo
 {
     public class TelegramHelperVo
     {
         public AccountVo AccountVo { get; private set; }
-
         public UserVo FromUserVo { get; private set; }
-
         public IEnumerable<UserVo> ToUsers { get; private set; }
+        public ConnectionVo ConnectionVo { get; private set; }
 
         public class Builder
         {
@@ -26,9 +26,15 @@ namespace TLC.Api.Models.Vo
                 return this;
             }
 
-            public Builder WithToUsers(IEnumerable<UserVo> toUsersVo)
+            public Builder WithToUsersVo(IEnumerable<UserVo> toUsersVo)
             {
                 _telegramHelperVo.ToUsers = toUsersVo;
+                return this;
+            }
+
+            public Builder WithConnectionVo(ConnectionVo connectionVo)
+            {
+                _telegramHelperVo.ConnectionVo = connectionVo;
                 return this;
             }
 
