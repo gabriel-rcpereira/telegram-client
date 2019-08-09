@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
 using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
+using TLC.Api.Models.Vo;
 using TLC.Api.Services.Contracts;
 using TLSchema;
 using TLSchema.Messages;
@@ -15,8 +17,6 @@ namespace TLC.Api.Services
 {
     public class ClientService : IClientService
     {
-        private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
-
         private readonly Client _clientConfiguration;
         private readonly ITelegramClientFactory _telegramClientFactory;
         private readonly ITelegramHelper _telegramHelper;
@@ -32,19 +32,7 @@ namespace TLC.Api.Services
 
         async Task IClientService.ForwardDailyMessageAsync()
         {
-            var client = _telegramClientFactory.CreateTelegramClient(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
-            await client.ConnectAsync();
-            
-            var messageSentToday = FilterLastMessageSentToday(_clientConfiguration.FromUser.Id,
-                (TLDialogs)await client.GetUserDialogsAsync());
-
-            if (messageSentToday != null)
-            {
-                _clientConfiguration.ToUsers.ToList()
-                    .ForEach(user => 
-                        client.SendMessageAsync(CreateUser(user.Id), 
-                            messageSentToday.Message));
-            }
+            await _telegramHelper.ForwardDailyMessageAsync(BuildTelegramHelperVo());
         }
 
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
@@ -70,31 +58,39 @@ namespace TLC.Api.Services
                 .Build();
         }
 
-        private static TLInputPeerUser CreateUser(int userId)
+        private TelegramHelperVo BuildTelegramHelperVo()
         {
-            return new TLInputPeerUser() { UserId = userId };
+            return new TelegramHelperVo.Builder()
+                .WithAccountVo(BuildAccountVo())
+                .WithFromUserVo(BuildFromUserVo())
+                .WithToUsers(BuildToUsersVo())
+                .Build();
         }
 
-        private TLMessage FilterLastMessageSentToday(int contactFromId, TLDialogs dialogs)
+        private IEnumerable<UserVo> BuildToUsersVo()
         {
-            if (dialogs == null)
-            {
-                return null;
-            }
-
-            DateTime yesterday = DateTime.UtcNow.Date.AddDays(-1);
-            double yesterdayUnixTimestamp = DateTimeToUnixTimeStamp(yesterday);
-            return dialogs.Messages
-                .OfType<TLMessage>()
-                .Where(message => message.FromId == contactFromId &&
-                    message.Date > yesterdayUnixTimestamp)
-                .FirstOrDefault();
+            return _clientConfiguration.ToUsers.Select(user =>
+                BuildUserVo(user));
         }
 
-        private double DateTimeToUnixTimeStamp(DateTime date)
+        private static UserVo BuildUserVo(User users)
         {
-            long ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
-            return Convert.ToDouble(ticks /= 10000000);
+            return new UserVo.Builder()
+                                .WithId(users.Id)
+                                .Build();
+        }
+
+        private UserVo BuildFromUserVo()
+        {
+            return BuildUserVo(_clientConfiguration.FromUser);
+        }
+
+        private AccountVo BuildAccountVo()
+        {
+            return new AccountVo.Builder()
+                .WithId(_clientConfiguration.Account.Id)
+                .WithHash(_clientConfiguration.Account.Hash)
+                .Build();
         }
     }
 }
