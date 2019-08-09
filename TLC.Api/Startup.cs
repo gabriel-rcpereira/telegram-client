@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TLC.Api.Configuration.Telegram;
-using TLC.Api.Factories;
-using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Services;
@@ -36,7 +34,6 @@ namespace TLC.Api
             // IoD
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IContactService, ContactService>();
-            services.AddTransient<ITelegramClientFactory, TelegramClientFactory>();
             services.AddTransient<ITelegramHelper, TelegramHelper>();            
         }
 

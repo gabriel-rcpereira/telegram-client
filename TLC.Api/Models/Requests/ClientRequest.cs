@@ -3,7 +3,6 @@
     public class ClientRequest
     {
         public string Code { get; set; }
-
         public string PhoneCodeHash { get; set; }
     }
 }

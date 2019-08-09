@@ -1,14 +1,11 @@
 ﻿using Microsoft.Extensions.Options;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
-using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
 using TLC.Api.Services.Contracts;
-using TLSchema;
 
 namespace TLC.Api.Services
 {

@@ -8,9 +8,7 @@ namespace TLC.Api.Models.Responses
     public class ContactResponse
     {
         public int Id { get; set; }
-
         public string FirstName { get; private set; }
-
         public string LastName { get; private set; }
 
         private ContactResponse() { }

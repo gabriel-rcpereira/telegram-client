@@ -5,9 +5,7 @@ namespace TLC.Api.Models.Vo
     public class ClientVo
     {
         public AccountVo Account { get; private set; }
-
         public UserVo FromUser { get; private set; }
-
         public IEnumerable<UserVo> ToUsers { get; private set; }
 
         private ClientVo(){ }

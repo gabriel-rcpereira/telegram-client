@@ -1,32 +1,24 @@
 ﻿using Microsoft.Extensions.Options;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
-using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
 using TLC.Api.Models.Vo;
 using TLC.Api.Services.Contracts;
-using TLSchema;
-using TLSchema.Messages;
-using TLSharp;
 
 namespace TLC.Api.Services
 {
     public class ClientService : IClientService
     {
         private readonly Client _clientConfiguration;
-        private readonly ITelegramClientFactory _telegramClientFactory;
         private readonly ITelegramHelper _telegramHelper;
 
         public ClientService(IOptions<Client> clientConfiguration,
-            ITelegramClientFactory telegramClientFactory,
             ITelegramHelper telegramHelper)
         {
             _clientConfiguration = clientConfiguration.Value;
-            _telegramClientFactory = telegramClientFactory;
             _telegramHelper = telegramHelper;
         }
 
