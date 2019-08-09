@@ -29,10 +29,7 @@ namespace TLC.Api.Services
 
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
         {
-            var telegramCodeResponse = await _telegramHelper.SendCodeRequestToClientAsync(_clientConfiguration.Account.Id,
-                _clientConfiguration.Account.Hash,
-                _clientConfiguration.Account.PhoneNumber);
-
+            var telegramCodeResponse = await _telegramHelper.SendCodeRequestToClientAsync(BuildTelegramHelperVo());
             return BuildClientResponse(telegramCodeResponse);
         }
 

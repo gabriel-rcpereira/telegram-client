@@ -31,11 +31,11 @@ namespace TLC.Api.Helpers
             return new List<TelegramContactResponse>();
         }
 
-        async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(int id, string hash, string phoneNumber)
+        async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(id, hash);
+            var client = NewClient(telegramHelperVo.AccountVo.Id, telegramHelperVo.AccountVo.Hash);
             await client.ConnectAsync();
-            return BuildTelegramCodeResponse(await client.SendCodeRequestAsync(phoneNumber));
+            return BuildTelegramCodeResponse(await client.SendCodeRequestAsync(telegramHelperVo.AccountVo.PhoneNumber));
         }
 
         async Task ITelegramHelper.ForwardDailyMessageAsync(TelegramHelperVo telegramHelperVo)
