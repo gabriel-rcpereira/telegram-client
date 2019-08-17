@@ -53,14 +53,6 @@ x64/
 .DS_Store*
 Icon?
 
-# Visual C++ cache files
-ipch/
-*.aps
-*.ncb
-*.opensdf
-*.sdf
-*.cachefile
-
 # Visual Studio profiler
 *.psess
 *.vsp
@@ -68,10 +60,6 @@ ipch/
 
 # Guidance Automation Toolkit
 *.gpState
-
-# ReSharper is a .NET coding add-in
-_ReSharper*/
-*.[Rr]e[Ss]harper
 
 # Installshield output folder
 [Ee]xpress/
@@ -81,6 +69,7 @@ publish/
 
 # Publish Web Output
 *.Publish.xml
+*.pubxml
 
 # Windows Azure Build Output
 csx
