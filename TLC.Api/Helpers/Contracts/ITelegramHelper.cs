@@ -10,6 +10,7 @@ namespace TLC.Api.Helpers.Contracts
         Task<IEnumerable<TelegramContactResponse>> FindContactsAsync(int id, string hash);
         Task<TelegramCodeResponse> SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo);
         Task ForwardDailyMessageAsync(TelegramHelperVo telegramHelperVo);
+        Task ForwardLastMessageAsync(TelegramHelperVo telegramHelperVo);
         Task UpdateCodeAsync(TelegramHelperVo telegramHelperVo);
     }
 }
