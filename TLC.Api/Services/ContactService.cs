@@ -32,8 +32,8 @@ namespace TLC.Api.Services
         {
             return new ContactResponse.Builder()
                 .WithId(telegramContactResponse.Id)
-                .WithFirstName(telegramContactResponse.FirstName)
-                .WithLastName(telegramContactResponse.LastName)
+                .WithName(telegramContactResponse.Name)
+                .WithType(telegramContactResponse.Type == Models.Enums.ContactType.Channel ? "Channel" : "Contact")
                 .Build();
         }
     }

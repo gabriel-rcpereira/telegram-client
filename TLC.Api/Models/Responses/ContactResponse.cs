@@ -8,8 +8,8 @@ namespace TLC.Api.Models.Responses
     public class ContactResponse
     {
         public int Id { get; set; }
-        public string FirstName { get; private set; }
-        public string LastName { get; private set; }
+        public string Name { get; private set; }
+        public string Type { get; private set; }
 
         private ContactResponse() { }
 
@@ -23,15 +23,15 @@ namespace TLC.Api.Models.Responses
                 return this;
             }
 
-            public Builder WithFirstName(string firstName)
+            public Builder WithName(string name)
             {
-                _contactResponse.FirstName = firstName;
+                _contactResponse.Name = name;
                 return this;
             }
 
-            public Builder WithLastName(string lastName)
+            public Builder WithType(string type)
             {
-                _contactResponse.LastName = lastName;
+                _contactResponse.Type = type;
                 return this;
             }
 
