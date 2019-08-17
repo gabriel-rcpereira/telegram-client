@@ -25,10 +25,10 @@ namespace TLC.Api.Services
         {
             var telegramContacts = await _telegramHelper
                 .FindContactsAsync(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
-            return telegramContacts.Select(contact => CreateContactResponse(contact));            
+            return telegramContacts.Select(contact => BuildContactResponse(contact));            
         }
 
-        private ContactResponse CreateContactResponse(TelegramContactResponse telegramContactResponse)
+        private ContactResponse BuildContactResponse(TelegramContactResponse telegramContactResponse)
         {
             return new ContactResponse.Builder()
                 .WithId(telegramContactResponse.Id)

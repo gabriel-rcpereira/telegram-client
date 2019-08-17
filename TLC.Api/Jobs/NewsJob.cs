@@ -33,7 +33,7 @@ namespace TLC.Api.Jobs
 
         bool IJobDetail.ConcurrentExecutionDisallowed => true;
 
-        bool IJobDetail.RequestsRecovery => false);
+        bool IJobDetail.RequestsRecovery => false;
         
         async Task IJob.Execute(IJobExecutionContext context)
         {

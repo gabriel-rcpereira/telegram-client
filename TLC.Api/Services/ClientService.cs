@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using AutoMapper;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,12 +15,15 @@ namespace TLC.Api.Services
     {
         private readonly Client _clientConfiguration;
         private readonly ITelegramHelper _telegramHelper;
+        private readonly IMapper _mapper;
 
         public ClientService(IOptions<Client> clientConfiguration,
-            ITelegramHelper telegramHelper)
+            ITelegramHelper telegramHelper,
+            IMapper mapper)
         {
             _clientConfiguration = clientConfiguration.Value;
             _telegramHelper = telegramHelper;
+            _mapper = mapper;
         }
 
         async Task IClientService.ForwardDailyMessageAsync()
@@ -29,8 +33,8 @@ namespace TLC.Api.Services
 
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
         {
-            var telegramCodeResponse = await _telegramHelper.SendCodeRequestToClientAsync(BuildTelegramHelperVo());
-            return BuildClientResponse(telegramCodeResponse);
+            return _mapper.Map<ClientResponse>(
+                await _telegramHelper.SendCodeRequestToClientAsync(BuildTelegramHelperVo()));
         }
 
         async Task IClientService.UpdateCodeAsync(string phoneCodeHash, string code)

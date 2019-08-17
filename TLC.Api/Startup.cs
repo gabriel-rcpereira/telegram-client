@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using AutoMapper;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +10,7 @@ using TLC.Api.Configuration.Telegram;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Jobs;
+using TLC.Api.Models.Mappers;
 using TLC.Api.Services;
 using TLC.Api.Services.Contracts;
 
@@ -35,7 +38,7 @@ namespace TLC.Api
             services.Configure<Client>(_configuration.GetSection($"{TelegramConfiguration}::{ClientConfiguration}"));
 
             ConfigureDepencyInjection(services);
-            ConfigureSchedule(services);
+            ConfigureSchedule(services.BuildServiceProvider());            
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -49,6 +52,15 @@ namespace TLC.Api
             app.UseMvc();
         }
 
+        private static IMapper ConfigureMapper()
+        {            
+            var mapperConfiguration = new MapperConfiguration(configuration =>
+            {
+                configuration.AddProfile(new ClientMapperProfile());
+            });
+            return mapperConfiguration.CreateMapper();
+        }
+
         private static void ConfigureDepencyInjection(IServiceCollection services)
         {
             // DI
@@ -57,15 +69,17 @@ namespace TLC.Api
             services.AddTransient<ITelegramHelper, TelegramHelper>();
             // job
             services.AddTransient<NewsJob>();
+            // mapper
+            services.AddSingleton(ConfigureMapper());
         }
 
-        private static void ConfigureSchedule(IServiceCollection services)
+        private static void ConfigureSchedule(ServiceProvider serviceProvider)
         {
             var scheduler = new StdSchedulerFactory().GetScheduler()
                 .Result;
             scheduler.ScheduleJob(JobBuilder.Create<NewsJob>().Build(), 
                 CreateTrigger());
-            scheduler.JobFactory = new JobFactory(services.BuildServiceProvider());
+            scheduler.JobFactory = new JobFactory(serviceProvider);
             scheduler.Start();
         }
 
