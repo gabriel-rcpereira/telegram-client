@@ -94,9 +94,10 @@ namespace TLC.Api.Helpers
 
         private TelegramCodeResponse BuildTelegramCodeResponse(string phoneCodeHash)
         {
-            return new TelegramCodeResponse.Builder()
-                .WithPhoneHashCode(phoneCodeHash)
-                .Build();
+            return new TelegramCodeResponse()
+            {
+                PhoneHashCode = phoneCodeHash
+            };
         }
 
         private TelegramContactResponse BuildTelegramResponse(TLUser user)

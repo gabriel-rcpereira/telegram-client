@@ -41,13 +41,6 @@ namespace TLC.Api.Services
         {
             await _telegramHelper.UpdateCodeAsync(BuildTelegramHelperVo(phoneCodeHash, code));
         }
-        
-        private static ClientResponse BuildClientResponse(TelegramCodeResponse telegramCodeResponse)
-        {
-            return new ClientResponse.Builder()
-                .WithPhoneCodeHash(telegramCodeResponse.PhoneHashCode)
-                .Build();
-        }
 
         private TelegramHelperVo BuildTelegramHelperVo(string phoneCodeHash = "", string code = "")
         {

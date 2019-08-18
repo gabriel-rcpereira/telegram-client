@@ -7,7 +7,8 @@ namespace TLC.Api.Models.Mappers
     {
         public ClientMapperProfile()
         {
-            CreateMap<TelegramCodeResponse, ClientResponse>();
+            CreateMap<TelegramCodeResponse, ClientResponse>()
+                .ForMember(target => target.PhoneCodeHash, option => option.MapFrom(source => source.PhoneHashCode));
         }
     }
 }
