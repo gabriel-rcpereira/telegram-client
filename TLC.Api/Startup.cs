@@ -35,7 +35,7 @@ namespace TLC.Api
                 .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_2_2);
 
             // configurations
-            services.Configure<Client>(_configuration.GetSection($"{TelegramConfiguration}::{ClientConfiguration}"));
+            services.Configure<Client>(_configuration.GetSection($"{TelegramConfiguration}:{ClientConfiguration}"));
 
             ConfigureDepencyInjection(services);
             ConfigureSchedule(services.BuildServiceProvider());            
