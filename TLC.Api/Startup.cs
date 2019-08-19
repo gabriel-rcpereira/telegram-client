@@ -57,6 +57,7 @@ namespace TLC.Api
             {
                 configuration.AddProfile(new ClientMapperProfile());
                 configuration.AddProfile(new TelegramMapperProfile());
+                configuration.AddProfile(new ContactMapperProfile());
             });
             return mapperConfiguration.CreateMapper();
         }
@@ -86,7 +87,7 @@ namespace TLC.Api
                     .Build(),
                 trigger);
             scheduler.JobFactory = new JobFactory(serviceProvider);
-            scheduler.Start();
+            //scheduler.Start();
         }
 
         private static ITrigger CreateTrigger()

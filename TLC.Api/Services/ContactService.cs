@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using AutoMapper;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,28 +14,22 @@ namespace TLC.Api.Services
     {
         private readonly ITelegramHelper _telegramHelper;
         private readonly TelegramConfiguration _telegramConfiguration;
+        private readonly IMapper _mapper;
 
         public ContactService(ITelegramHelper telegramHelper, 
-            IOptions<TelegramConfiguration> telegramConfiguration)
+            IOptions<TelegramConfiguration> telegramConfiguration,
+            IMapper mapper)
         {
             _telegramHelper = telegramHelper;
             _telegramConfiguration = telegramConfiguration.Value;
+            _mapper = mapper;
         }
 
         async Task<IEnumerable<ContactResponse>> IContactService.FindContactsAsync()
         {
-            var telegramContacts = await _telegramHelper
-                .FindContactsAsync(_telegramConfiguration.Client.Id, _telegramConfiguration.Client.Hash);
-            return telegramContacts.Select(contact => BuildContactResponse(contact));            
-        }
-
-        private ContactResponse BuildContactResponse(TelegramContactResponse telegramContactResponse)
-        {
-            return new ContactResponse.Builder()
-                .WithId(telegramContactResponse.Id)
-                .WithName(telegramContactResponse.Name)
-                .WithType(telegramContactResponse.Type == Models.Enums.ContactType.Channel ? "Channel" : "Contact")
-                .Build();
-        }
+            return (await _telegramHelper
+                .FindContactsAsync(_telegramConfiguration.Client.Id, _telegramConfiguration.Client.Hash))
+                .Select(contact => _mapper.Map<ContactResponse>(contact));            
+        }        
     }
 }
