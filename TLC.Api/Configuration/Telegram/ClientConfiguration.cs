@@ -1,6 +1,6 @@
 ﻿namespace TLC.Api.Configuration.Telegram
 {
-    public class Account
+    public class ClientConfiguration
     {
         public int Id { get; set; }
         

@@ -1,4 +1,6 @@
-﻿using Quartz;
+﻿using AutoMapper;
+using Microsoft.Extensions.Options;
+using Quartz;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,81 +11,24 @@ using TLC.Api.Models.Vo;
 
 namespace TLC.Api.Jobs
 {
-    public class NewsJob : IJob, IJobDetail
+    public class NewsJob : IJob
     {
         private readonly ITelegramHelper _telegramHelper;
-        private readonly Client _clientConfiguration;
+        private readonly TelegramConfiguration _telegramConfiguration;
+        private readonly IMapper _mapper;
         
-        public NewsJob(ITelegramHelper telegramHelper)
+        public NewsJob(ITelegramHelper telegramHelper,
+            IOptions<TelegramConfiguration> telegramConfiguration,
+            IMapper mapper)
         {
             _telegramHelper = telegramHelper;
+            _telegramConfiguration = telegramConfiguration.Value;
+            _mapper = mapper;
         }
 
-        JobKey IJobDetail.Key => new JobKey("newsJob", "telegramGroup");
-
-        string IJobDetail.Description => "It job runs each 45 seconds";
-
-        Type IJobDetail.JobType => typeof(NewsJob);
-
-        JobDataMap IJobDetail.JobDataMap => null;
-
-        bool IJobDetail.Durable => false;
-
-        bool IJobDetail.PersistJobDataAfterExecution => false;
-
-        bool IJobDetail.ConcurrentExecutionDisallowed => true;
-
-        bool IJobDetail.RequestsRecovery => false;
-        
         async Task IJob.Execute(IJobExecutionContext context)
         {
-            await _telegramHelper.ForwardLastMessageAsync(BuildTelegramHelperVo());
-        }
-
-        private TelegramHelperVo BuildTelegramHelperVo()
-        {
-            return new TelegramHelperVo.Builder()
-                .WithAccountVo(BuildAccountVo())
-                .WithFromUserVo(BuildFromUserVo())
-                .WithToUsersVo(BuildToUsersVo())
-                .Build();
-        }
-
-        private IEnumerable<UserVo> BuildToUsersVo()
-        {
-            return _clientConfiguration.ToUsers.Select(user =>
-                BuildUserVo(user));
-        }
-
-        private static UserVo BuildUserVo(User users)
-        {
-            return new UserVo.Builder()
-                                .WithId(users.Id)
-                                .Build();
-        }
-
-        private UserVo BuildFromUserVo()
-        {
-            return BuildUserVo(_clientConfiguration.FromUser);
-        }
-
-        private AccountVo BuildAccountVo()
-        {
-            return new AccountVo.Builder()
-                .WithId(_clientConfiguration.Account.Id)
-                .WithHash(_clientConfiguration.Account.Hash)
-                .WithPhoneNumber(_clientConfiguration.Account.PhoneNumber)
-                .Build();
-        }
-
-        JobBuilder IJobDetail.GetJobBuilder()
-        {
-            throw new NotImplementedException();
-        }
-
-        IJobDetail IJobDetail.Clone()
-        {
-            throw new NotImplementedException();
+            await _telegramHelper.ForwardLastMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
         }
     }
 }

@@ -44,17 +44,17 @@ namespace TLC.Api.Helpers
 
         async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.AccountVo.Id, telegramHelperVo.AccountVo.Hash);
+            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
             await client.ConnectAsync();
-            return BuildTelegramCodeResponse(await client.SendCodeRequestAsync(telegramHelperVo.AccountVo.PhoneNumber));
+            return BuildTelegramCodeResponse(await client.SendCodeRequestAsync(telegramHelperVo.Client.PhoneNumber));
         }
 
         async Task ITelegramHelper.ForwardDailyMessageAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.AccountVo.Id, telegramHelperVo.AccountVo.Hash);
+            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
             await client.ConnectAsync();
 
-            var messageSentToday = FilterLastMessageSentToday(telegramHelperVo.FromUserVo.Id,
+            var messageSentToday = FilterLastMessageSentToday(telegramHelperVo.FromUser.Id,
                 (TLDialogs)await client.GetUserDialogsAsync());
 
             if (messageSentToday != null)
@@ -68,19 +68,19 @@ namespace TLC.Api.Helpers
 
         async Task ITelegramHelper.UpdateCodeAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.AccountVo.Id, telegramHelperVo.AccountVo.Hash);
+            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
             await client.ConnectAsync();
-            await client.MakeAuthAsync(telegramHelperVo.AccountVo.PhoneNumber,
+            await client.MakeAuthAsync(telegramHelperVo.Client.PhoneNumber,
                 telegramHelperVo.ConnectionVo.PhoneCodeHash,
                 telegramHelperVo.ConnectionVo.Code);
         }
 
         async Task ITelegramHelper.ForwardLastMessageAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.AccountVo.Id, telegramHelperVo.AccountVo.Hash);
+            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
             await client.ConnectAsync();
 
-            var lastMessage = FilterLastMessageSent(telegramHelperVo.FromUserVo.Id,
+            var lastMessage = FilterLastMessageSent(telegramHelperVo.FromUser.Id,
                 (TLDialogs)await client.GetUserDialogsAsync());
 
             if (lastMessage != null)

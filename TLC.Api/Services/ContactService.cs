@@ -12,19 +12,19 @@ namespace TLC.Api.Services
     public class ContactService : IContactService
     {
         private readonly ITelegramHelper _telegramHelper;
-        private readonly Client _clientConfiguration;
+        private readonly TelegramConfiguration _telegramConfiguration;
 
         public ContactService(ITelegramHelper telegramHelper, 
-            IOptions<Client> clientConfiguration)
+            IOptions<TelegramConfiguration> telegramConfiguration)
         {
             _telegramHelper = telegramHelper;
-            _clientConfiguration = clientConfiguration.Value;
+            _telegramConfiguration = telegramConfiguration.Value;
         }
 
         async Task<IEnumerable<ContactResponse>> IContactService.FindContactsAsync()
         {
             var telegramContacts = await _telegramHelper
-                .FindContactsAsync(_clientConfiguration.Account.Id, _clientConfiguration.Account.Hash);
+                .FindContactsAsync(_telegramConfiguration.Client.Id, _telegramConfiguration.Client.Hash);
             return telegramContacts.Select(contact => BuildContactResponse(contact));            
         }
 

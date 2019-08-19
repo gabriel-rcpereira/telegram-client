@@ -13,78 +13,37 @@ namespace TLC.Api.Services
 {
     public class ClientService : IClientService
     {
-        private readonly Client _clientConfiguration;
+        private readonly TelegramConfiguration _telegramConfiguration;
         private readonly ITelegramHelper _telegramHelper;
         private readonly IMapper _mapper;
 
-        public ClientService(IOptions<Client> clientConfiguration,
+        public ClientService(IOptions<TelegramConfiguration> clientConfiguration,
             ITelegramHelper telegramHelper,
             IMapper mapper)
         {
-            _clientConfiguration = clientConfiguration.Value;
+            _telegramConfiguration = clientConfiguration.Value;
             _telegramHelper = telegramHelper;
             _mapper = mapper;
         }
 
         async Task IClientService.ForwardDailyMessageAsync()
         {
-            await _telegramHelper.ForwardDailyMessageAsync(BuildTelegramHelperVo());
+            await _telegramHelper.ForwardDailyMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
         }
 
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
         {
             return _mapper.Map<ClientResponse>(
-                await _telegramHelper.SendCodeRequestToClientAsync(BuildTelegramHelperVo()));
+                await _telegramHelper.SendCodeRequestToClientAsync(
+                    _mapper.Map<TelegramHelperVo>(_telegramConfiguration)));
         }
 
         async Task IClientService.UpdateCodeAsync(string phoneCodeHash, string code)
         {
-            await _telegramHelper.UpdateCodeAsync(BuildTelegramHelperVo(phoneCodeHash, code));
-        }
+            var telegramHelperVo = _mapper.Map<TelegramHelperVo>(_telegramConfiguration);
+            telegramHelperVo.ConnectionVo = new ConnectionVo(phoneCodeHash, code);
 
-        private TelegramHelperVo BuildTelegramHelperVo(string phoneCodeHash = "", string code = "")
-        {
-            return new TelegramHelperVo.Builder()
-                .WithAccountVo(BuildAccountVo())
-                .WithFromUserVo(BuildFromUserVo())
-                .WithToUsersVo(BuildToUsersVo())
-                .WithConnectionVo(BuildConnectionVo(phoneCodeHash, code))
-                .Build();
-        }
-
-        private ConnectionVo BuildConnectionVo(string phoneCodeHash, string code)
-        {
-            return new ConnectionVo.Builder()
-                .WithPhoneCodeHash(phoneCodeHash)
-                .WithCode(code)
-                .Build();
-        }
-        
-        private IEnumerable<UserVo> BuildToUsersVo()
-        {
-            return _clientConfiguration.ToUsers.Select(user =>
-                BuildUserVo(user));
-        }
-
-        private static UserVo BuildUserVo(User users)
-        {
-            return new UserVo.Builder()
-                                .WithId(users.Id)
-                                .Build();
-        }
-
-        private UserVo BuildFromUserVo()
-        {
-            return BuildUserVo(_clientConfiguration.FromUser);
-        }
-
-        private AccountVo BuildAccountVo()
-        {
-            return new AccountVo.Builder()
-                .WithId(_clientConfiguration.Account.Id)
-                .WithHash(_clientConfiguration.Account.Hash)
-                .WithPhoneNumber(_clientConfiguration.Account.PhoneNumber)
-                .Build();
-        }
+            await _telegramHelper.UpdateCodeAsync(telegramHelperVo);
+        }        
     }
 }

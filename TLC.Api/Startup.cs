@@ -18,8 +18,7 @@ namespace TLC.Api
 {
     public class Startup
     {
-        private const string TelegramConfiguration = "Telegram";
-        private const string ClientConfiguration = "Client";
+        private const string TelegramAppConfiguration = "Telegram";
 
         private IConfiguration _configuration;
 
@@ -35,7 +34,7 @@ namespace TLC.Api
                 .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_2_2);
 
             // configurations
-            services.Configure<Client>(_configuration.GetSection($"{TelegramConfiguration}:{ClientConfiguration}"));
+            services.Configure<TelegramConfiguration>(_configuration.GetSection($"{TelegramAppConfiguration}"));
 
             ConfigureDepencyInjection(services);
             ConfigureSchedule(services.BuildServiceProvider());            
@@ -57,6 +56,7 @@ namespace TLC.Api
             var mapperConfiguration = new MapperConfiguration(configuration =>
             {
                 configuration.AddProfile(new ClientMapperProfile());
+                configuration.AddProfile(new TelegramMapperProfile());
             });
             return mapperConfiguration.CreateMapper();
         }
@@ -77,8 +77,14 @@ namespace TLC.Api
         {
             var scheduler = new StdSchedulerFactory().GetScheduler()
                 .Result;
-            scheduler.ScheduleJob(JobBuilder.Create<NewsJob>().Build(), 
-                CreateTrigger());
+
+            var trigger = CreateTrigger();
+
+            scheduler.ScheduleJob(
+                JobBuilder.Create<NewsJob>()
+                    .WithIdentity(typeof(NewsJob).Name, "telegramGroup")
+                    .Build(),
+                trigger);
             scheduler.JobFactory = new JobFactory(serviceProvider);
             scheduler.Start();
         }
