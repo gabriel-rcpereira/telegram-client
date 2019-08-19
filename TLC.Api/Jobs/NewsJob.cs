@@ -1,22 +1,23 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
+using Quartz;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
 using TLC.Api.Helpers.Contracts;
-using TLC.Api.Models.Responses;
-using TLC.Api.Services.Contracts;
+using TLC.Api.Models.Vo;
 
-namespace TLC.Api.Services
+namespace TLC.Api.Jobs
 {
-    public class ContactService : IContactService
+    public class NewsJob : IJob
     {
         private readonly ITelegramHelper _telegramHelper;
         private readonly TelegramConfiguration _telegramConfiguration;
         private readonly IMapper _mapper;
-
-        public ContactService(ITelegramHelper telegramHelper, 
+        
+        public NewsJob(ITelegramHelper telegramHelper,
             IOptions<TelegramConfiguration> telegramConfiguration,
             IMapper mapper)
         {
@@ -25,11 +26,9 @@ namespace TLC.Api.Services
             _mapper = mapper;
         }
 
-        async Task<IEnumerable<ContactResponse>> IContactService.FindContactsAsync()
+        async Task IJob.Execute(IJobExecutionContext context)
         {
-            return (await _telegramHelper
-                .FindContactsAsync(_telegramConfiguration.Client.Id, _telegramConfiguration.Client.Hash))
-                .Select(contact => _mapper.Map<ContactResponse>(contact));            
-        }        
+            await _telegramHelper.ForwardLastMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
+        }
     }
 }

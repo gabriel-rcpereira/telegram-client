@@ -1,10 +1,12 @@
-﻿namespace TLC.Api.Models.Responses
+﻿using TLC.Api.Models.Enums;
+
+namespace TLC.Api.Models.Responses
 {
     public class TelegramContactResponse
     {
         public int Id { get; private set; }
-        public string FirstName { get; private set; }
-        public string LastName { get; private set; }
+        public string Name { get; private set; }
+        public ContactType Type { get; private set; }
 
         private TelegramContactResponse() { }
 
@@ -18,15 +20,15 @@
                 return this;
             }
 
-            public Builder WithFirstName(string firstName)
+            public Builder WithName(string Name)
             {
-                _telegramContact.FirstName = firstName;
+                _telegramContact.Name = Name;
                 return this;
             }
 
-            public Builder WithLastName(string lastName)
+            public Builder WithType(ContactType type)
             {
-                _telegramContact.LastName = lastName;
+                _telegramContact.Type = type;
                 return this;
             }
 
