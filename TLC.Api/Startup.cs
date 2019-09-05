@@ -1,11 +1,13 @@
-﻿using System;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Quartz;
 using Quartz.Impl;
+using System.Diagnostics;
+using System.IO;
 using TLC.Api.Configuration.Telegram;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
@@ -35,6 +37,8 @@ namespace TLC.Api
 
             // configurations
             services.Configure<TelegramConfiguration>(_configuration.GetSection($"{TelegramAppConfiguration}"));
+            // logging
+            services.AddLogging(logging => logging.AddFile(GetFileLogPath(), LogLevel.Information));
 
             ConfigureDepencyInjection(services);
             ConfigureSchedule(services.BuildServiceProvider());            
@@ -64,7 +68,7 @@ namespace TLC.Api
 
         private static void ConfigureDepencyInjection(IServiceCollection services)
         {
-            // DI
+            // di
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IContactService, ContactService>();
             services.AddTransient<ITelegramHelper, TelegramHelper>();
@@ -99,6 +103,23 @@ namespace TLC.Api
                                 .WithIntervalInSeconds(45)
                                 .RepeatForever())
                             .Build();
+        }
+
+        private string GetFileLogPath()
+        {
+            var logFileTxt = "tlcApi.log";
+
+            if (Debugger.IsAttached)
+            {
+                var currentDirectory = Directory.GetCurrentDirectory();
+                return (currentDirectory.LastIndexOf(Path.DirectorySeparatorChar) == currentDirectory.Length - 1 ?
+                    currentDirectory :
+                    currentDirectory + Path.DirectorySeparatorChar) + logFileTxt;
+            }
+            else
+            {
+                return $@"C:\ProgramData\Temp\{logFileTxt}";
+            }
         }
     }
 }

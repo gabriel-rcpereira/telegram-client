@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,6 +16,13 @@ namespace TLC.Api.Helpers
     public class TelegramHelper : ITelegramHelper
     {
         private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
+
+        private readonly ILogger _logger;
+
+        public TelegramHelper(ILogger<TelegramHelper> logger)
+        {
+            _logger = logger;
+        }
 
         async Task<IEnumerable<TelegramContactResponse>> ITelegramHelper.FindContactsAsync(int id, string hash)
         {
@@ -44,11 +52,12 @@ namespace TLC.Api.Helpers
 
         async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
-            await client.ConnectAsync();
+            var client = await GetTelegramClient(telegramHelperVo);
+
+            _logger.LogInformation($"Sending the code to the phone. PhoneNumber: [{telegramHelperVo.Client.PhoneNumber}].");
             return BuildTelegramCodeResponse(await client.SendCodeRequestAsync(telegramHelperVo.Client.PhoneNumber));
         }
-
+        
         async Task ITelegramHelper.ForwardDailyMessageAsync(TelegramHelperVo telegramHelperVo)
         {
             var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
@@ -125,7 +134,18 @@ namespace TLC.Api.Helpers
 
         private TelegramClient NewClient(int id, string hash)
         {
+            _logger.LogInformation("Creating a new Telegram Client.");
             return new TelegramClient(id, hash);
+        }
+
+        private async Task<TelegramClient> GetTelegramClient(TelegramHelperVo telegramHelperVo)
+        {
+            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
+
+            _logger.LogInformation("Connecting the Telegram Client.");
+            await client.ConnectAsync();
+
+            return client;
         }
 
         private TLMessage FilterLastMessageSentToday(int contactFromId, TLDialogs dialogs)

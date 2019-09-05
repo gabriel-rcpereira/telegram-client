@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TLC.Api.Models.Requests;
@@ -13,16 +14,20 @@ namespace TLC.Api.Controllers
     public class ClientController : ControllerBase
     {
         private readonly IClientService _clientService;
+        private readonly ILogger _logger;
 
-        public ClientController(IClientService clientService)
+        public ClientController(IClientService clientService,
+            ILogger<ClientController> logger)
         {
             _clientService = clientService;
+            _logger = logger;
         }
 
         [HttpPost("messages")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> PostForwardDailyMessageAsync()
         {
+            _logger.LogInformation("Forwarding daily message.");
             await _clientService.ForwardDailyMessageAsync();
             return Ok();
         }
@@ -31,13 +36,15 @@ namespace TLC.Api.Controllers
         [ProducesResponseType(typeof(ClientResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> PostSendCodeRequestToClientAsync()
         {
+            _logger.LogInformation("Sending code request to client.");
             return Ok(await _clientService.SendCodeRequestToClientAsync());
         }
 
         [HttpPut("codes")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> PutReceiveCodeRequestedAsync([FromBody] ClientRequest clientRequest)
+        public async Task<IActionResult> PutCodeRequestedAsync([FromBody] ClientRequest clientRequest)
         {
+            _logger.LogInformation("Updating code requested.");
             await _clientService.UpdateCodeAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }
