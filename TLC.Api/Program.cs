@@ -15,7 +15,6 @@ namespace TLC.Api
                 .Build();
 
             var isService = !(Debugger.IsAttached || args.Contains("--console"));
-
             if (isService)
             {
                 SetCurrentDirectoryRunningAsService();
