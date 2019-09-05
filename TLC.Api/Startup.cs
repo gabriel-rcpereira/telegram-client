@@ -20,7 +20,7 @@ namespace TLC.Api
     {
         private const string TelegramAppConfiguration = "Telegram";
 
-        private IConfiguration _configuration;
+        private readonly IConfiguration _configuration;
 
         public Startup(IConfiguration configuration)
         {
