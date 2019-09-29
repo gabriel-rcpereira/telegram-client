@@ -51,7 +51,7 @@ namespace TLC.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseMvc();
         }
 
@@ -91,7 +91,7 @@ namespace TLC.Api
                     .Build(),
                 trigger);
             scheduler.JobFactory = new JobFactory(serviceProvider);
-            //scheduler.Start();
+            scheduler.Start();
         }
 
         private static ITrigger CreateTrigger()

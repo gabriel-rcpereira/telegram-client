@@ -28,7 +28,8 @@ namespace TLC.Api.Jobs
 
         async Task IJob.Execute(IJobExecutionContext context)
         {
-            await _telegramHelper.ForwardLastMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
+            TelegramHelperVo telegramHelperVo = _mapper.Map<TelegramHelperVo>(_telegramConfiguration);
+            await _telegramHelper.ForwardLastMessageAsync(telegramHelperVo);
         }
     }
 }

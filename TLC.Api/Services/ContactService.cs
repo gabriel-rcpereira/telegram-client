@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using TLC.Api.Configuration.Telegram;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
+using TLC.Api.Models.Vo;
 using TLC.Api.Services.Contracts;
 
 namespace TLC.Api.Services
@@ -27,8 +28,9 @@ namespace TLC.Api.Services
 
         async Task<IEnumerable<ContactResponse>> IContactService.FindContactsAsync()
         {
+            var telegramHelperVo = _mapper.Map<TelegramHelperVo>(_telegramConfiguration);
             return (await _telegramHelper
-                .FindContactsAsync(_telegramConfiguration.Client.Id, _telegramConfiguration.Client.Hash))
+                .FindContactsAsync(telegramHelperVo))
                 .Select(contact => _mapper.Map<ContactResponse>(contact));            
         }        
     }

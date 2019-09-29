@@ -28,7 +28,7 @@ namespace TLC.Api.Services
 
         async Task IClientService.ForwardDailyMessageAsync()
         {
-            await _telegramHelper.ForwardDailyMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
+            await _telegramHelper.ForwardDailyChannelMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
         }
 
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
