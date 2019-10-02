@@ -53,11 +53,14 @@ namespace TLC.Api.Helpers
 
             using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
             {
-                _logger.LogDebug("Getting the dialog messages.");
-                TLDialogs dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+                var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
                 var lastMessage = FilterLastChannelMessageSentToday(telegramHelperVo.FromUser.Id, dialogs);
 
                 if (String.IsNullOrEmpty(lastMessage.Message))
+                {
+                    _logger.LogDebug("There is no message to forward.");
+                }
+                else
                 {
                     SendMessageAsync(telegramHelperVo.ToUsers, client, lastMessage);
                 }
@@ -181,14 +184,25 @@ namespace TLC.Api.Helpers
         {
             _logger.LogDebug("Appling the filter to get messages sent today.");
 
+            IEnumerable<TLMessage> messages = FilterChannelMessages(contactFromId, dialogs);
+            double yesterdayUnixTimestamp = GetYesterdayDateAsUnixTimestamp();
+            return messages?.FirstOrDefault(message => message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
+        }
+
+        private double GetYesterdayDateAsUnixTimestamp()
+        {
             DateTime yesterday = DateTime.UtcNow.Date.AddDays(-1);
             double yesterdayUnixTimestamp = DateTimeToUnixTimeStamp(yesterday);
+            _logger.LogDebug($"The original date [{yesterday}]. The date converted to UnixTimestamp [yesterdayUnixTimestamp].");
+            return yesterdayUnixTimestamp;
+        }
 
+        private static IEnumerable<TLMessage> FilterChannelMessages(int contactFromId, TLDialogs dialogs)
+        {
             return dialogs?.Messages
                 .OfType<TLMessage>()
-                .FirstOrDefault(message => message.ToId.GetType() == typeof(TLPeerChannel) &&
-                    ((TLPeerChannel)message.ToId).ChannelId == contactFromId &&
-                    message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
+                .Where(message => message.ToId.GetType() == typeof(TLPeerChannel) &&
+                    ((TLPeerChannel)message.ToId).ChannelId == contactFromId);
         }
 
         private TLMessage FilterLastMessageSent(int contactFromId, TLDialogs dialogs)
