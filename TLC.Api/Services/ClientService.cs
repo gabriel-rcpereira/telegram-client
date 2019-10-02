@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using TLC.Api.Configuration.Telegram;
+using TLC.Api.Configurations.Telegram;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
 using TLC.Api.Models.Vo;

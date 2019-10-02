@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using TLC.Api.Configuration.Telegram;
+using TLC.Api.Configurations.Telegram;
 using TLC.Api.Models.Vo;
 
 namespace TLC.Api.Models.Mappers

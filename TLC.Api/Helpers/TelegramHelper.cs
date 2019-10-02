@@ -27,43 +27,10 @@ namespace TLC.Api.Helpers
 
         async Task<IEnumerable<TelegramContactResponse>> ITelegramHelper.FindContactsAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = await ConnectTelegramClientAsync(telegramHelperVo);
-
-            IEnumerable<TelegramContactResponse> telegramContactsResponse = new List<TelegramContactResponse>();
-
-            _logger.LogInformation("Getting the contacts.");
-            var contacts = await client.GetContactsAsync();
-            if (contacts != null)
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
             {
-                telegramContactsResponse = contacts.Users
-                    .OfType<TLUser>()
-                    .Select(user => BuildTelegramResponse(user));
+                return (await GetContactsAsync(client)).Union(await GetContactsFromChatAsync(client));
             }
-
-            _logger.LogInformation("Getting the dialogs messages.");
-            var dialogs = (TLDialogs) await client.GetUserDialogsAsync();
-            if (dialogs != null)
-            {
-                _logger.LogInformation("Filtering the dialogs.");
-                telegramContactsResponse = telegramContactsResponse.Union(dialogs.Chats
-                    .OfType<TLChat>()
-                    .Select(chat => BuildTelegramResponse(chat)));
-
-                //var channelMessages = dialogs.Messages
-                //    .OfType<TLMessage>()
-                //    ?.Where(message => message.ToId.GetType() == typeof(TLPeerChannel))
-                //    .Select(message => message.id);
-
-
-                //TODO - implement the list of channels
-                //var channelsDialog = dialogs.Messages.OfType<TLMessage>().Where(m => m.ToId.GetType() == typeof(TLPeerChannel));
-                //if (channelsDialog != null)
-                //{
-                //    telegramContactsResponse = telegramContactsResponse.Union(channelsDialog.Select(message => BuildTelegramResponse(message)));
-                //}
-            }
-
-            return telegramContactsResponse;
         }
 
         async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo)
@@ -269,6 +236,26 @@ namespace TLC.Api.Helpers
         {
             long ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
             return Convert.ToDouble(ticks /= 10000000);
+        }
+
+        private async Task<IEnumerable<TelegramContactResponse>> GetContactsFromChatAsync(TelegramClient client)
+        {
+            _logger.LogInformation("Getting the contacts from dialogs chats.");
+
+            var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+            return dialogs?.Chats
+                    .OfType<TLChat>()
+                    .Select(chat => BuildTelegramResponse(chat)) ?? new List<TelegramContactResponse>();
+        }
+
+        private async Task<IEnumerable<TelegramContactResponse>> GetContactsAsync(TelegramClient client)
+        {
+            _logger.LogDebug("Getting the contacts.");
+
+            var contacts = await client.GetContactsAsync();
+            return contacts?.Users
+                .OfType<TLUser>()
+                .Select(user => BuildTelegramResponse(user)) ?? new List<TelegramContactResponse>();
         }
     }
 }

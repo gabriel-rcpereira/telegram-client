@@ -8,7 +8,7 @@ using Quartz;
 using Quartz.Impl;
 using System.Diagnostics;
 using System.IO;
-using TLC.Api.Configuration.Telegram;
+using TLC.Api.Configurations.Telegram;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Jobs;
