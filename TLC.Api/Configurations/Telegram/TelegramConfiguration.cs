@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TLC.Api.Configuration.Telegram
+namespace TLC.Api.Configurations.Telegram
 {
     public class TelegramConfiguration
     {
