@@ -67,16 +67,16 @@ namespace TLC.Api.Helpers
             }
         }
 
-        async Task ITelegramHelper.UpdateCodeAsync(TelegramHelperVo telegramHelperVo)
+        async Task ITelegramHelper.MakeAuthenticationAsync(TelegramHelperVo telegramHelperVo)
         {
-            _logger.LogInformation("Updating the code.");
+            _logger.LogInformation("Making authentication.");
 
-            var client = await ConnectTelegramClientAsync(telegramHelperVo);
-
-            _logger.LogInformation("Making the authentication.");
-            await client.MakeAuthAsync(telegramHelperVo.Client.PhoneNumber,
-                telegramHelperVo.ConnectionVo.PhoneCodeHash,
-                telegramHelperVo.ConnectionVo.Code);
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
+            {
+                await client.MakeAuthAsync(telegramHelperVo.Client.PhoneNumber,
+                    telegramHelperVo.ConnectionVo.PhoneCodeHash,
+                    telegramHelperVo.ConnectionVo.Code);
+            }
         }
 
         async Task ITelegramHelper.ForwardLastMessageAsync(TelegramHelperVo telegramHelperVo)

@@ -41,7 +41,7 @@ namespace TLC.Api.Services
             var telegramHelperVo = _mapper.Map<TelegramHelperVo>(_telegramConfiguration);
             telegramHelperVo.ConnectionVo = new ConnectionVo(phoneCodeHash, code);
 
-            await _telegramHelper.UpdateCodeAsync(telegramHelperVo);
+            await _telegramHelper.MakeAuthenticationAsync(telegramHelperVo);
         }        
     }
 }

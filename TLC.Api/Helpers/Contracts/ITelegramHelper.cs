@@ -11,7 +11,7 @@ namespace TLC.Api.Helpers.Contracts
         Task<TelegramCodeResponse> SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo);
         Task ForwardDailyChannelMessageAsync(TelegramHelperVo telegramHelperVo);
         Task ForwardLastMessageAsync(TelegramHelperVo telegramHelperVo);
-        Task UpdateCodeAsync(TelegramHelperVo telegramHelperVo);
+        Task MakeAuthenticationAsync(TelegramHelperVo telegramHelperVo);
         Task ForwardLastChannelMessageAsync(TelegramHelperVo telegramHelperVo);
     }
 }
