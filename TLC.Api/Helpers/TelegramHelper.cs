@@ -188,7 +188,7 @@ namespace TLC.Api.Helpers
                 .OfType<TLMessage>()
                 .FirstOrDefault(message => message.ToId.GetType() == typeof(TLPeerChannel) &&
                     ((TLPeerChannel)message.ToId).ChannelId == contactFromId &&
-                    message.Date <= yesterdayUnixTimestamp) ?? new TLMessage();
+                    message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
         }
 
         private TLMessage FilterLastMessageSent(int contactFromId, TLDialogs dialogs)
