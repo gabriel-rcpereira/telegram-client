@@ -83,17 +83,19 @@ namespace TLC.Api.Helpers
         {
             _logger.LogInformation("Forwading last message.");
 
-            var client = await ConnectTelegramClientAsync(telegramHelperVo);
-
-            var lastMessage = FilterLastMessageSent(telegramHelperVo.FromUser.Id,
-                (TLDialogs)await client.GetUserDialogsAsync());
-
-            if (lastMessage != null)
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
             {
-                telegramHelperVo.ToUsers.ToList()
-                    .ForEach(user =>
-                        client.SendMessageAsync(CreateUser(user.Id),
-                            $"OkiBot --> {lastMessage.Message}"));
+                var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+                var lastMessage = FilterLastChannelMessageSent(telegramHelperVo.FromUser.Id, dialogs);
+
+                if (string.IsNullOrEmpty(lastMessage.Message))
+                {
+                    _logger.LogDebug("There is no message to forward.");
+                }
+                else
+                {
+                    SendMessageAsync(telegramHelperVo.ToUsers, client, lastMessage);
+                }
             }
         }
 
@@ -193,7 +195,7 @@ namespace TLC.Api.Helpers
         {
             DateTime yesterday = DateTime.UtcNow.Date.AddDays(-1);
             double yesterdayUnixTimestamp = DateTimeToUnixTimeStamp(yesterday);
-            _logger.LogDebug($"The original date [{yesterday}]. The date converted to UnixTimestamp [yesterdayUnixTimestamp].");
+            _logger.LogDebug($"The original date [{yesterday}]. The date converted to UnixTimestamp [{yesterdayUnixTimestamp}].");
             return yesterdayUnixTimestamp;
         }
 
@@ -205,47 +207,19 @@ namespace TLC.Api.Helpers
                     ((TLPeerChannel)message.ToId).ChannelId == contactFromId);
         }
 
-        private TLMessage FilterLastMessageSent(int contactFromId, TLDialogs dialogs)
-        {
-            _logger.LogInformation("Filtering last message sent.");
-
-            if (dialogs == null || dialogs.Messages == null)
-            {
-                _logger.LogInformation("There is not message.");
-                return null;
-            }
-
-            _logger.LogInformation("Applying the filter.");
-            DateTime someSecondsAgo = DateTime.UtcNow.Date.AddSeconds(-45);
-            double someSecondsAgoUnixTimestamp = DateTimeToUnixTimeStamp(someSecondsAgo);
-            _logger.LogInformation($"Some seconds ago date [{someSecondsAgo}]. Some seconds ago UnixTimestamp [{someSecondsAgoUnixTimestamp}].");
-            return dialogs.Messages
-                .OfType<TLMessage>()
-                .FirstOrDefault(message => message.FromId == contactFromId &&
-                    message.Date > someSecondsAgoUnixTimestamp);
-        }
-
         private TLMessage FilterLastChannelMessageSent(int contactFromId, TLDialogs dialogs)
         {
-            _logger.LogInformation("Filtering last message sent.");
+            double someSecondsAgoUnixTimestamp = GetSomeSecondsAgoAsUnixTimestamp();
+            IEnumerable<TLMessage> messages = FilterChannelMessages(contactFromId, dialogs);
+            return messages?.FirstOrDefault(message => message.Date > someSecondsAgoUnixTimestamp) ?? new TLMessage();
+        }
 
-            if (dialogs == null || dialogs.Messages == null)
-            {
-                _logger.LogInformation("There is not message.");
-                return null;
-            }
-
-            _logger.LogInformation("Applying the filter.");
-            DateTime someSecondsAgoDate = DateTime.UtcNow.Date.AddSeconds(-45);
-            double someSecondsAgoUnixTimestamp = DateTimeToUnixTimeStamp(someSecondsAgoDate);
-
-            _logger.LogInformation($"Some seconds ago date [{someSecondsAgoDate}]. Some seconds ago UnixTimestamp [{someSecondsAgoUnixTimestamp}].");
-
-            return dialogs.Messages
-                .OfType<TLMessage>()
-                .FirstOrDefault(message => message.ToId.GetType() == typeof(TLPeerChannel) &&
-                    ((TLPeerChannel)message.ToId).ChannelId == contactFromId &&
-                    message.Date > someSecondsAgoUnixTimestamp);
+        private double GetSomeSecondsAgoAsUnixTimestamp()
+        {
+            DateTime someSecondsAgo = DateTime.UtcNow.Date.AddSeconds(-45);
+            double someSecondsAgoUnixTimestamp = DateTimeToUnixTimeStamp(someSecondsAgo);
+            _logger.LogDebug($"The original date [{someSecondsAgo}]. The date converted to UnixTimestamp [{someSecondsAgoUnixTimestamp}].");
+            return someSecondsAgoUnixTimestamp;
         }
 
         private double DateTimeToUnixTimeStamp(DateTime date)
