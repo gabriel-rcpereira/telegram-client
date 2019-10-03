@@ -8,7 +8,6 @@ using TLC.Api.Models.Enums;
 using TLC.Api.Models.Responses;
 using TLC.Api.Models.Vo;
 using TLSchema;
-using TLSchema.Channels;
 using TLSchema.Messages;
 using TLSharp;
 
