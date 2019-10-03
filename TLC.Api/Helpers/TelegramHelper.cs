@@ -35,9 +35,9 @@ namespace TLC.Api.Helpers
             }
         }
 
-        async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo)
+        async Task<TelegramCodeResponse> ITelegramHelper.StartAuthenticationAsync(TelegramHelperVo telegramHelperVo)
         {
-            _logger.LogInformation("Sending code request.");
+            _logger.LogInformation("Starting authentication.");
 
             using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
             {
@@ -123,6 +123,36 @@ namespace TLC.Api.Helpers
                     client.SendMessageAsync(CreateUser(user.Id),
                         $"OkiBot --> {message.Message}"));
         }
+        
+        private TelegramClient NewClient(int id, string hash)
+        {
+            _logger.LogInformation("Creating a new Telegram Client.");
+            TelegramClient telegramClient = null;
+            try
+            {
+                telegramClient = new TelegramClient(id, hash);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation($"An error happened: {e.Message}", e);
+            }
+            return telegramClient;
+        }
+
+        private async Task<TelegramClient> ConnectTelegramClientAsync(TelegramHelperVo telegramHelperVo)
+        {
+            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
+
+            _logger.LogInformation("Connecting the Telegram Client.");
+            await client.ConnectAsync();
+
+            return client;
+        }
+
+        private static TLInputPeerChat CreateUser(int userId)
+        {
+            return new TLInputPeerChat() { ChatId = userId };
+        }
 
         private TelegramCodeResponse BuildTelegramCodeResponse(string phoneCodeHash)
         {
@@ -152,36 +182,6 @@ namespace TLC.Api.Helpers
                 .Build();
         }
 
-        private static TLInputPeerChat CreateUser(int userId)
-        {
-            return new TLInputPeerChat() { ChatId = userId };
-        }
-
-        private TelegramClient NewClient(int id, string hash)
-        {
-            _logger.LogInformation("Creating a new Telegram Client.");
-            TelegramClient telegramClient = null;
-            try
-            {
-                telegramClient = new TelegramClient(id, hash);
-            }
-            catch (Exception e)
-            {
-                _logger.LogInformation($"An error happened: {e.Message}", e);
-            }
-            return telegramClient;
-        }
-
-        private async Task<TelegramClient> ConnectTelegramClientAsync(TelegramHelperVo telegramHelperVo)
-        {
-            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
-
-            _logger.LogInformation("Connecting the Telegram Client.");
-            await client.ConnectAsync();
-
-            return client;
-        }
-
         private TLMessage FilterLastChannelMessageSentToday(int contactFromId, TLDialogs dialogs)
         {
             _logger.LogDebug("Appling the filter to get messages sent today.");
@@ -189,6 +189,20 @@ namespace TLC.Api.Helpers
             IEnumerable<TLMessage> messages = FilterChannelMessages(contactFromId, dialogs);
             double yesterdayUnixTimestamp = GetYesterdayDateAsUnixTimestamp();
             return messages?.FirstOrDefault(message => message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
+        }
+
+        private double DateTimeToUnixTimeStamp(DateTime date)
+        {
+            long ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
+            return Convert.ToDouble(ticks /= 10000000);
+        }
+
+        private double GetSomeSecondsAgoAsUnixTimestamp()
+        {
+            DateTime someSecondsAgo = DateTime.UtcNow.Date.AddSeconds(-45);
+            double someSecondsAgoUnixTimestamp = DateTimeToUnixTimeStamp(someSecondsAgo);
+            _logger.LogDebug($"The original date [{someSecondsAgo}]. The date converted to UnixTimestamp [{someSecondsAgoUnixTimestamp}].");
+            return someSecondsAgoUnixTimestamp;
         }
 
         private double GetYesterdayDateAsUnixTimestamp()
@@ -212,20 +226,6 @@ namespace TLC.Api.Helpers
             double someSecondsAgoUnixTimestamp = GetSomeSecondsAgoAsUnixTimestamp();
             IEnumerable<TLMessage> messages = FilterChannelMessages(contactFromId, dialogs);
             return messages?.FirstOrDefault(message => message.Date > someSecondsAgoUnixTimestamp) ?? new TLMessage();
-        }
-
-        private double GetSomeSecondsAgoAsUnixTimestamp()
-        {
-            DateTime someSecondsAgo = DateTime.UtcNow.Date.AddSeconds(-45);
-            double someSecondsAgoUnixTimestamp = DateTimeToUnixTimeStamp(someSecondsAgo);
-            _logger.LogDebug($"The original date [{someSecondsAgo}]. The date converted to UnixTimestamp [{someSecondsAgoUnixTimestamp}].");
-            return someSecondsAgoUnixTimestamp;
-        }
-
-        private double DateTimeToUnixTimeStamp(DateTime date)
-        {
-            long ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
-            return Convert.ToDouble(ticks /= 10000000);
         }
 
         private async Task<IEnumerable<TelegramContactResponse>> GetContactsFromChatAsync(TelegramClient client)

@@ -32,7 +32,7 @@ namespace TLC.Api.Services
         async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
         {
             return _mapper.Map<ClientResponse>(
-                await _telegramHelper.SendCodeRequestToClientAsync(
+                await _telegramHelper.StartAuthenticationAsync(
                     _mapper.Map<TelegramHelperVo>(_telegramConfiguration)));
         }
 
