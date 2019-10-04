@@ -61,7 +61,7 @@ namespace TLC.Api.Helpers
                 }
                 else
                 {
-                    SendMessageAsync(telegramHelperVo.ToUsers, client, lastMessage);
+                    SendMessageToChatAsync(telegramHelperVo.ToUsers, client, lastMessage);
                 }
             }
         }
@@ -85,7 +85,7 @@ namespace TLC.Api.Helpers
             using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
             {
                 var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
-                var lastMessage = FilterLastChannelMessageSent(telegramHelperVo.FromUser.Id, dialogs);
+                var lastMessage = FilterLastUserMessageSent(telegramHelperVo.FromUser.Id, dialogs);
 
                 if (string.IsNullOrEmpty(lastMessage.Message))
                 {
@@ -93,7 +93,7 @@ namespace TLC.Api.Helpers
                 }
                 else
                 {
-                    SendMessageAsync(telegramHelperVo.ToUsers, client, lastMessage);
+                    SendMessageToChatAsync(telegramHelperVo.ToUsers, client, lastMessage);
                 }
             }
         }
@@ -102,40 +102,36 @@ namespace TLC.Api.Helpers
         {
             _logger.LogInformation("Forwading last channel message.");
 
-            var client = await ConnectTelegramClientAsync(telegramHelperVo);
-
-            TLDialogs dialogs = (TLDialogs)await client.GetUserDialogsAsync();
-            var lastMessage = FilterLastChannelMessageSent(telegramHelperVo.FromUser.Id, dialogs);
-
-            if (lastMessage != null)
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
             {
-                SendMessageAsync(telegramHelperVo.ToUsers, client, lastMessage);          
+                TLDialogs dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+                var lastMessage = FilterLastChannelMessageSent(telegramHelperVo.FromUser.Id, dialogs);
+
+                if (string.IsNullOrEmpty(lastMessage.Message))
+                {
+                    _logger.LogDebug("There is no message to forward.");
+                }
+                else
+                {
+                    SendMessageToChatAsync(telegramHelperVo.ToUsers, client, lastMessage);
+                }
             }
         }
 
-        private void SendMessageAsync(IEnumerable<UserVo> toUsers, TelegramClient client, TLMessage message)
+        private void SendMessageToChatAsync(IEnumerable<UserVo> toUsers, TelegramClient client, TLMessage message)
         {
-            _logger.LogInformation("Forwarding message filtered.");
+            _logger.LogDebug("Forwarding message to chat.");
 
             toUsers.ToList()
                 .ForEach(user =>
-                    client.SendMessageAsync(CreateUser(user.Id),
+                    client.SendMessageAsync(BuildInputPeerChat(user.Id),
                         $"OkiBot --> {message.Message}"));
         }
         
-        private TelegramClient NewClient(int id, string hash)
+        private TelegramClient NewClient(int appId, string appHash)
         {
-            _logger.LogInformation("Creating a new Telegram Client.");
-            TelegramClient telegramClient = null;
-            try
-            {
-                telegramClient = new TelegramClient(id, hash);
-            }
-            catch (Exception e)
-            {
-                _logger.LogInformation($"An error happened: {e.Message}", e);
-            }
-            return telegramClient;
+            _logger.LogInformation("Creating a new Telegram Client instance.");
+            return new TelegramClient(appId, appHash);
         }
 
         private async Task<TelegramClient> ConnectTelegramClientAsync(TelegramHelperVo telegramHelperVo)
@@ -148,7 +144,7 @@ namespace TLC.Api.Helpers
             return client;
         }
 
-        private static TLInputPeerChat CreateUser(int userId)
+        private static TLInputPeerChat BuildInputPeerChat(int userId)
         {
             return new TLInputPeerChat() { ChatId = userId };
         }
@@ -181,11 +177,11 @@ namespace TLC.Api.Helpers
                 .Build();
         }
 
-        private TLMessage FilterLastChannelMessageSentToday(int contactFromId, TLDialogs dialogs)
+        private TLMessage FilterLastChannelMessageSentToday(int channelId, TLDialogs dialogs)
         {
             _logger.LogDebug("Appling the filter to get messages sent today.");
 
-            IEnumerable<TLMessage> messages = FilterChannelMessages(contactFromId, dialogs);
+            IEnumerable<TLMessage> messages = FilterChannelMessages(channelId, dialogs);
             double yesterdayUnixTimestamp = GetYesterdayDateAsUnixTimestamp();
             return messages?.FirstOrDefault(message => message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
         }
@@ -212,18 +208,34 @@ namespace TLC.Api.Helpers
             return yesterdayUnixTimestamp;
         }
 
-        private static IEnumerable<TLMessage> FilterChannelMessages(int contactFromId, TLDialogs dialogs)
+        private TLMessage FilterLastUserMessageSent(int userId, TLDialogs dialogs)
+        {
+            _logger.LogDebug("Appling the filter to get messages sent today.");
+
+            IEnumerable<TLMessage> messages = FilterUserMessages(userId, dialogs);
+            double yesterdayUnixTimestamp = GetYesterdayDateAsUnixTimestamp();
+            return messages?.FirstOrDefault(message => message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
+        }
+
+        private IEnumerable<TLMessage> FilterUserMessages(int userId, TLDialogs dialogs)
+        {
+            return dialogs?.Messages
+                .OfType<TLMessage>()
+                .Where(message => message.FromId == userId);
+        }
+
+        private static IEnumerable<TLMessage> FilterChannelMessages(int channelId, TLDialogs dialogs)
         {
             return dialogs?.Messages
                 .OfType<TLMessage>()
                 .Where(message => message.ToId.GetType() == typeof(TLPeerChannel) &&
-                    ((TLPeerChannel)message.ToId).ChannelId == contactFromId);
+                    ((TLPeerChannel)message.ToId).ChannelId == channelId);
         }
 
-        private TLMessage FilterLastChannelMessageSent(int contactFromId, TLDialogs dialogs)
+        private TLMessage FilterLastChannelMessageSent(int channelId, TLDialogs dialogs)
         {
             double someSecondsAgoUnixTimestamp = GetSomeSecondsAgoAsUnixTimestamp();
-            IEnumerable<TLMessage> messages = FilterChannelMessages(contactFromId, dialogs);
+            IEnumerable<TLMessage> messages = FilterChannelMessages(channelId, dialogs);
             return messages?.FirstOrDefault(message => message.Date > someSecondsAgoUnixTimestamp) ?? new TLMessage();
         }
 
