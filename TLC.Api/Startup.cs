@@ -9,6 +9,7 @@ using Quartz.Impl;
 using System.Diagnostics;
 using System.IO;
 using TLC.Api.Configurations.Telegram;
+using TLC.Api.Factories;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Jobs;
@@ -72,6 +73,7 @@ namespace TLC.Api
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IContactService, ContactService>();
             services.AddTransient<INewService, NewsService>();
+            services.AddTransient<ITelegramClientFactory, TelegramClientFactory>();
             services.AddTransient<ITelegramHelper, TelegramHelper>();
             // job
             services.AddTransient<NewsJob>();

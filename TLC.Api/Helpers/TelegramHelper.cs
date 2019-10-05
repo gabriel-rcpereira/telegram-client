@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TLC.Api.Factories;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Enums;
 using TLC.Api.Models.Responses;
@@ -16,12 +17,15 @@ namespace TLC.Api.Helpers
     public class TelegramHelper : ITelegramHelper
     {
         private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
+        private const double TickNumber = 10000000;
 
         private readonly ILogger _logger;
+        private readonly ITelegramClientFactory _telegramClientFactory;
 
-        public TelegramHelper(ILogger<TelegramHelper> logger)
+        public TelegramHelper(ILogger<TelegramHelper> logger, ITelegramClientFactory telegramClientFactory)
         {
             _logger = logger;
+            _telegramClientFactory = telegramClientFactory;
         }
 
         async Task<IEnumerable<TelegramContactResponse>> ITelegramHelper.FindContactsAsync(TelegramHelperVo telegramHelperVo)
@@ -127,16 +131,10 @@ namespace TLC.Api.Helpers
                     client.SendMessageAsync(BuildInputPeerChat(user.Id),
                         $"OkiBot --> {message.Message}"));
         }
-        
-        private TelegramClient NewClient(int appId, string appHash)
-        {
-            _logger.LogInformation("Creating a new Telegram Client instance.");
-            return new TelegramClient(appId, appHash);
-        }
 
         private async Task<TelegramClient> ConnectTelegramClientAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
+            var client = _telegramClientFactory.CreateClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
 
             _logger.LogInformation("Connecting the Telegram Client.");
             await client.ConnectAsync();
@@ -188,8 +186,8 @@ namespace TLC.Api.Helpers
 
         private double DateTimeToUnixTimeStamp(DateTime date)
         {
-            long ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
-            return Convert.ToDouble(ticks /= 10000000);
+            double ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
+            return ticks / TickNumber;
         }
 
         private double GetSomeSecondsAgoAsUnixTimestamp()
