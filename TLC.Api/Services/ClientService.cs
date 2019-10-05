@@ -31,9 +31,10 @@ namespace TLC.Api.Services
 
         async Task<ClientResponse> IClientService.StartAuthenticationAsync()
         {
-            return _mapper.Map<ClientResponse>(
-                await _telegramHelper.StartAuthenticationAsync(
-                    _mapper.Map<TelegramHelperVo>(_telegramConfiguration)));
+            var telegramCodeResponse = await _telegramHelper.StartAuthenticationAsync(
+                _mapper.Map<TelegramHelperVo>(_telegramConfiguration));
+
+            return _mapper.Map<ClientResponse>(telegramCodeResponse);
         }
 
         async Task IClientService.MakeAuthenticationAsync(string phoneCodeHash, string code)
