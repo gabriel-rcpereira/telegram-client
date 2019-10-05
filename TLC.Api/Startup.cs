@@ -12,6 +12,7 @@ using TLC.Api.Configurations.Telegram;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Jobs;
+using TLC.Api.Jobs.Factories;
 using TLC.Api.Models.Mappers;
 using TLC.Api.Services;
 using TLC.Api.Services.Contracts;
