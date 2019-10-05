@@ -1,6 +1,6 @@
 ﻿using TLSharp;
 
-namespace TLC.Api.Factories
+namespace TLC.Api.Factories.Contracts
 {
     public interface ITelegramClientFactory
     {

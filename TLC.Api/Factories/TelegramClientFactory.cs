@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using TLC.Api.Factories.Contracts;
 using TLSharp;
 
 namespace TLC.Api.Factories

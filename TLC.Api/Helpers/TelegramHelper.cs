@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TLC.Api.Factories;
+using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Enums;
 using TLC.Api.Models.Responses;
