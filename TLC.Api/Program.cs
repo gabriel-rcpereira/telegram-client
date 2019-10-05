@@ -11,18 +11,21 @@ namespace TLC.Api
     {
         public static void Main(string[] args)
         {
-            var host = CreateWebHostBuilder(GetParameters(args))
-                .Build();
+            string[] parameters = GetParameters(args);
 
             var isService = !(Debugger.IsAttached || args.Contains("--console"));
             if (isService)
             {
                 SetCurrentDirectoryRunningAsService();
-                host.RunAsService();
+                CreateWebHostBuilder(parameters)
+                    .Build()
+                    .RunAsService();
             }
             else
             {
-                host.Run();
+                CreateWebHostBuilder(parameters)
+                    .Build()
+                    .Run();
             }
         }
 

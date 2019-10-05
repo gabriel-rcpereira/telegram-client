@@ -1,4 +1,4 @@
-﻿namespace TLC.Api.Configuration.Telegram
+﻿namespace TLC.Api.Configurations.Telegram
 {
     public class UserConfiguration
     {

@@ -7,10 +7,11 @@ namespace TLC.Api.Helpers.Contracts
 {
     public interface ITelegramHelper
     {
-        Task<IEnumerable<TelegramContactResponse>> FindContactsAsync(int id, string hash);
-        Task<TelegramCodeResponse> SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo);
-        Task ForwardDailyMessageAsync(TelegramHelperVo telegramHelperVo);
+        Task<IEnumerable<TelegramContactResponse>> FindContactsAsync(TelegramHelperVo telegramHelperVo);
+        Task<TelegramCodeResponse> StartAuthenticationAsync(TelegramHelperVo telegramHelperVo);
+        Task ForwardDailyChannelMessageAsync(TelegramHelperVo telegramHelperVo);
         Task ForwardLastMessageAsync(TelegramHelperVo telegramHelperVo);
-        Task UpdateCodeAsync(TelegramHelperVo telegramHelperVo);
+        Task MakeAuthenticationAsync(TelegramHelperVo telegramHelperVo);
+        Task ForwardLastChannelMessageAsync(TelegramHelperVo telegramHelperVo);
     }
 }

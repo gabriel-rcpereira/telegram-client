@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using TLC.Api.Configuration.Telegram;
+using TLC.Api.Configurations.Telegram;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Responses;
 using TLC.Api.Models.Vo;
@@ -26,24 +24,25 @@ namespace TLC.Api.Services
             _mapper = mapper;
         }
 
-        async Task IClientService.ForwardDailyMessageAsync()
+        async Task IClientService.ForwardDailyChannelMessageAsync()
         {
-            await _telegramHelper.ForwardDailyMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
+            await _telegramHelper.ForwardDailyChannelMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
         }
 
-        async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
+        async Task<ClientResponse> IClientService.StartAuthenticationAsync()
         {
-            return _mapper.Map<ClientResponse>(
-                await _telegramHelper.SendCodeRequestToClientAsync(
-                    _mapper.Map<TelegramHelperVo>(_telegramConfiguration)));
+            var telegramCodeResponse = await _telegramHelper.StartAuthenticationAsync(
+                _mapper.Map<TelegramHelperVo>(_telegramConfiguration));
+
+            return _mapper.Map<ClientResponse>(telegramCodeResponse);
         }
 
-        async Task IClientService.UpdateCodeAsync(string phoneCodeHash, string code)
+        async Task IClientService.MakeAuthenticationAsync(string phoneCodeHash, string code)
         {
             var telegramHelperVo = _mapper.Map<TelegramHelperVo>(_telegramConfiguration);
             telegramHelperVo.ConnectionVo = new ConnectionVo(phoneCodeHash, code);
 
-            await _telegramHelper.UpdateCodeAsync(telegramHelperVo);
+            await _telegramHelper.MakeAuthenticationAsync(telegramHelperVo);
         }        
     }
 }

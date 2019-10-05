@@ -5,8 +5,8 @@ namespace TLC.Api.Services.Contracts
 {
     public interface IClientService
     {
-        Task ForwardDailyMessageAsync();
-        Task<ClientResponse> SendCodeRequestToClientAsync();
-        Task UpdateCodeAsync(string phoneCodeHash, string code);
+        Task ForwardDailyChannelMessageAsync();
+        Task<ClientResponse> StartAuthenticationAsync();
+        Task MakeAuthenticationAsync(string phoneCodeHash, string code);
     }
 }

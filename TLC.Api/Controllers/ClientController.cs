@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using TLC.Api.Models.Requests;
 using TLC.Api.Models.Responses;
@@ -13,32 +13,38 @@ namespace TLC.Api.Controllers
     public class ClientController : ControllerBase
     {
         private readonly IClientService _clientService;
+        private readonly ILogger _logger;
 
-        public ClientController(IClientService clientService)
+        public ClientController(IClientService clientService,
+            ILogger<ClientController> logger)
         {
             _clientService = clientService;
+            _logger = logger;
         }
 
         [HttpPost("messages")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> PostForwardDailyMessageAsync()
+        public async Task<IActionResult> PostForwardDailyChannelMessageAsync()
         {
-            await _clientService.ForwardDailyMessageAsync();
+            _logger.LogInformation("Post request to forward daily channel message.");
+            await _clientService.ForwardDailyChannelMessageAsync();
             return Ok();
         }
 
         [HttpPost("codes")]
         [ProducesResponseType(typeof(ClientResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> PostSendCodeRequestToClientAsync()
+        public async Task<IActionResult> PostStartAuthenticationAsync()
         {
-            return Ok(await _clientService.SendCodeRequestToClientAsync());
+            _logger.LogInformation("Posting starting authentication using the parameters configured.");
+            return Ok(await _clientService.StartAuthenticationAsync());
         }
 
         [HttpPut("codes")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> PutReceiveCodeRequestedAsync([FromBody] ClientRequest clientRequest)
+        public async Task<IActionResult> PutMakeAuthenticationAsync([FromBody] ClientRequest clientRequest)
         {
-            await _clientService.UpdateCodeAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
+            _logger.LogInformation("Puting the client code to make the authentication.");
+            await _clientService.MakeAuthenticationAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }
     }

@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Models.Enums;
 using TLC.Api.Models.Responses;
@@ -15,81 +17,134 @@ namespace TLC.Api.Helpers
     public class TelegramHelper : ITelegramHelper
     {
         private const string EpochUnixTimeStamp = "01/01/1970 00:00:00";
+        private const double TickNumber = 10000000;
 
-        async Task<IEnumerable<TelegramContactResponse>> ITelegramHelper.FindContactsAsync(int id, string hash)
+        private readonly ILogger _logger;
+        private readonly ITelegramClientFactory _telegramClientFactory;
+
+        public TelegramHelper(ILogger<TelegramHelper> logger, ITelegramClientFactory telegramClientFactory)
         {
-            var client = NewClient(id, hash);
-            await client.ConnectAsync();
-
-            IEnumerable<TelegramContactResponse> telegramContacstResponse = new List<TelegramContactResponse>();
-
-            var contacts = await client.GetContactsAsync();
-            if (contacts != null)
-            {
-                telegramContacstResponse = contacts.Users
-                    .OfType<TLUser>()
-                    .Select(user => BuildTelegramResponse(user));
-            }
-
-            var dialogs = (TLDialogs) await client.GetUserDialogsAsync();
-            if (dialogs != null)
-            {
-                telegramContacstResponse = telegramContacstResponse.Union(dialogs.Chats
-                    .OfType<TLChat>()
-                    .Select(chat => BuildTelegramResponse(chat)));
-            }
-
-            return telegramContacstResponse;
+            _logger = logger;
+            _telegramClientFactory = telegramClientFactory;
         }
 
-        async Task<TelegramCodeResponse> ITelegramHelper.SendCodeRequestToClientAsync(TelegramHelperVo telegramHelperVo)
+        async Task<IEnumerable<TelegramContactResponse>> ITelegramHelper.FindContactsAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
-            await client.ConnectAsync();
-            return BuildTelegramCodeResponse(await client.SendCodeRequestAsync(telegramHelperVo.Client.PhoneNumber));
-        }
+            _logger.LogInformation("Finding the contacts.");
 
-        async Task ITelegramHelper.ForwardDailyMessageAsync(TelegramHelperVo telegramHelperVo)
-        {
-            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
-            await client.ConnectAsync();
-
-            var messageSentToday = FilterLastMessageSentToday(telegramHelperVo.FromUser.Id,
-                (TLDialogs)await client.GetUserDialogsAsync());
-
-            if (messageSentToday != null)
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
             {
-                telegramHelperVo.ToUsers.ToList()
-                    .ForEach(user =>
-                        client.SendMessageAsync(CreateUser(user.Id),
-                            messageSentToday.Message));
+                return (await GetContactsAsync(client)).Union(await GetContactsFromChatAsync(client));
             }
         }
 
-        async Task ITelegramHelper.UpdateCodeAsync(TelegramHelperVo telegramHelperVo)
+        async Task<TelegramCodeResponse> ITelegramHelper.StartAuthenticationAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
-            await client.ConnectAsync();
-            await client.MakeAuthAsync(telegramHelperVo.Client.PhoneNumber,
-                telegramHelperVo.ConnectionVo.PhoneCodeHash,
-                telegramHelperVo.ConnectionVo.Code);
+            _logger.LogInformation("Starting authentication.");
+
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
+            {
+                _logger.LogDebug($"Sending the code to phone. PhoneNumber: [{telegramHelperVo.Client.PhoneNumber}].");
+                string phoneCodeHash = await client.SendCodeRequestAsync(telegramHelperVo.Client.PhoneNumber);
+                return BuildTelegramCodeResponse(phoneCodeHash);
+            }
+        }
+        
+        async Task ITelegramHelper.ForwardDailyChannelMessageAsync(TelegramHelperVo telegramHelperVo)
+        {
+            _logger.LogInformation("Forwarding the daily message.");
+
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
+            {
+                var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+                var lastMessage = FilterLastChannelMessageSentToday(telegramHelperVo.FromUser.Id, dialogs);
+
+                if (String.IsNullOrEmpty(lastMessage.Message))
+                {
+                    _logger.LogDebug("There is no message to forward.");
+                }
+                else
+                {
+                    SendMessageToChatAsync(telegramHelperVo.ToUsers, client, lastMessage);
+                }
+            }
+        }
+
+        async Task ITelegramHelper.MakeAuthenticationAsync(TelegramHelperVo telegramHelperVo)
+        {
+            _logger.LogInformation("Making authentication.");
+
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
+            {
+                await client.MakeAuthAsync(telegramHelperVo.Client.PhoneNumber,
+                    telegramHelperVo.ConnectionVo.PhoneCodeHash,
+                    telegramHelperVo.ConnectionVo.Code);
+            }
         }
 
         async Task ITelegramHelper.ForwardLastMessageAsync(TelegramHelperVo telegramHelperVo)
         {
-            var client = NewClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
+            _logger.LogInformation("Forwading last message.");
+
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
+            {
+                var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+                var lastMessage = FilterLastUserMessageSent(telegramHelperVo.FromUser.Id, dialogs);
+
+                if (string.IsNullOrEmpty(lastMessage.Message))
+                {
+                    _logger.LogDebug("There is no message to forward.");
+                }
+                else
+                {
+                    SendMessageToChatAsync(telegramHelperVo.ToUsers, client, lastMessage);
+                }
+            }
+        }
+
+        async Task ITelegramHelper.ForwardLastChannelMessageAsync(TelegramHelperVo telegramHelperVo)
+        {
+            _logger.LogInformation("Forwading last channel message.");
+
+            using (var client = await ConnectTelegramClientAsync(telegramHelperVo))
+            {
+                TLDialogs dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+                var lastMessage = FilterLastChannelMessageSent(telegramHelperVo.FromUser.Id, dialogs);
+
+                if (string.IsNullOrEmpty(lastMessage.Message))
+                {
+                    _logger.LogDebug("There is no message to forward.");
+                }
+                else
+                {
+                    SendMessageToChatAsync(telegramHelperVo.ToUsers, client, lastMessage);
+                }
+            }
+        }
+
+        private void SendMessageToChatAsync(IEnumerable<UserVo> toUsers, TelegramClient client, TLMessage message)
+        {
+            _logger.LogDebug("Forwarding message to chat.");
+
+            toUsers.ToList()
+                .ForEach(user =>
+                    client.SendMessageAsync(BuildInputPeerChat(user.Id),
+                        $"OkiBot --> {message.Message}"));
+        }
+
+        private async Task<TelegramClient> ConnectTelegramClientAsync(TelegramHelperVo telegramHelperVo)
+        {
+            var client = _telegramClientFactory.CreateClient(telegramHelperVo.Client.Id, telegramHelperVo.Client.Hash);
+
+            _logger.LogInformation("Connecting the Telegram Client.");
             await client.ConnectAsync();
 
-            var lastMessage = FilterLastMessageSent(telegramHelperVo.FromUser.Id,
-                (TLDialogs)await client.GetUserDialogsAsync());
+            return client;
+        }
 
-            if (lastMessage != null)
-            {
-                telegramHelperVo.ToUsers.ToList()
-                    .ForEach(user =>
-                        client.SendMessageAsync(CreateUser(user.Id),
-                            $"OkiBot --> {lastMessage.Message}"));
-            }
+        private static TLInputPeerChat BuildInputPeerChat(int userId)
+        {
+            return new TLInputPeerChat() { ChatId = userId };
         }
 
         private TelegramCodeResponse BuildTelegramCodeResponse(string phoneCodeHash)
@@ -102,6 +157,8 @@ namespace TLC.Api.Helpers
 
         private TelegramContactResponse BuildTelegramResponse(TLUser user)
         {
+            _logger.LogInformation("Building telegram response.");
+
             return new TelegramContactResponse.Builder()
                 .WithId(user.Id)
                 .WithName($"{user.FirstName} {user.LastName}")
@@ -118,52 +175,86 @@ namespace TLC.Api.Helpers
                 .Build();
         }
 
-        private static TLInputPeerUser CreateUser(int userId)
+        private TLMessage FilterLastChannelMessageSentToday(int channelId, TLDialogs dialogs)
         {
-            return new TLInputPeerUser() { UserId = userId };
-        }
+            _logger.LogDebug("Appling the filter to get messages sent today.");
 
-        private TelegramClient NewClient(int id, string hash)
-        {
-            return new TelegramClient(id, hash);
-        }
-
-        private TLMessage FilterLastMessageSentToday(int contactFromId, TLDialogs dialogs)
-        {
-            if (dialogs == null)
-            {
-                return null;
-            }
-
-            DateTime yesterday = DateTime.UtcNow.Date.AddDays(-1);
-            double yesterdayUnixTimestamp = DateTimeToUnixTimeStamp(yesterday);
-            return dialogs.Messages
-                .OfType<TLMessage>()
-                .Where(message => message.FromId == contactFromId &&
-                    message.Date > yesterdayUnixTimestamp)
-                .FirstOrDefault();
-        }
-
-        private TLMessage FilterLastMessageSent(int contactFromId, TLDialogs dialogs)
-        {
-            if (dialogs == null)
-            {
-                return null;
-            }
-
-            DateTime yesterday = DateTime.UtcNow.Date.AddSeconds(-45);
-            double yesterdayUnixTimestamp = DateTimeToUnixTimeStamp(yesterday);
-            return dialogs.Messages
-                .OfType<TLMessage>()
-                .Where(message => message.FromId == contactFromId &&
-                    message.Date > yesterdayUnixTimestamp)
-                .FirstOrDefault();
+            IEnumerable<TLMessage> messages = FilterChannelMessages(channelId, dialogs);
+            double yesterdayUnixTimestamp = GetYesterdayDateAsUnixTimestamp();
+            return messages?.FirstOrDefault(message => message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
         }
 
         private double DateTimeToUnixTimeStamp(DateTime date)
         {
-            long ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
-            return Convert.ToDouble(ticks /= 10000000);
+            double ticks = date.Date.Ticks - DateTime.Parse(EpochUnixTimeStamp).Ticks;
+            return ticks / TickNumber;
+        }
+
+        private double GetSomeSecondsAgoAsUnixTimestamp()
+        {
+            DateTime someSecondsAgo = DateTime.UtcNow.Date.AddSeconds(-45);
+            double someSecondsAgoUnixTimestamp = DateTimeToUnixTimeStamp(someSecondsAgo);
+            _logger.LogDebug($"The original date [{someSecondsAgo}]. The date converted to UnixTimestamp [{someSecondsAgoUnixTimestamp}].");
+            return someSecondsAgoUnixTimestamp;
+        }
+
+        private double GetYesterdayDateAsUnixTimestamp()
+        {
+            DateTime yesterday = DateTime.UtcNow.Date.AddDays(-1);
+            double yesterdayUnixTimestamp = DateTimeToUnixTimeStamp(yesterday);
+            _logger.LogDebug($"The original date [{yesterday}]. The date converted to UnixTimestamp [{yesterdayUnixTimestamp}].");
+            return yesterdayUnixTimestamp;
+        }
+
+        private TLMessage FilterLastUserMessageSent(int userId, TLDialogs dialogs)
+        {
+            _logger.LogDebug("Appling the filter to get messages sent today.");
+
+            IEnumerable<TLMessage> messages = FilterUserMessages(userId, dialogs);
+            double yesterdayUnixTimestamp = GetYesterdayDateAsUnixTimestamp();
+            return messages?.FirstOrDefault(message => message.Date >= yesterdayUnixTimestamp) ?? new TLMessage();
+        }
+
+        private IEnumerable<TLMessage> FilterUserMessages(int userId, TLDialogs dialogs)
+        {
+            return dialogs?.Messages
+                .OfType<TLMessage>()
+                .Where(message => message.FromId == userId);
+        }
+
+        private static IEnumerable<TLMessage> FilterChannelMessages(int channelId, TLDialogs dialogs)
+        {
+            return dialogs?.Messages
+                .OfType<TLMessage>()
+                .Where(message => message.ToId.GetType() == typeof(TLPeerChannel) &&
+                    ((TLPeerChannel)message.ToId).ChannelId == channelId);
+        }
+
+        private TLMessage FilterLastChannelMessageSent(int channelId, TLDialogs dialogs)
+        {
+            double someSecondsAgoUnixTimestamp = GetSomeSecondsAgoAsUnixTimestamp();
+            IEnumerable<TLMessage> messages = FilterChannelMessages(channelId, dialogs);
+            return messages?.FirstOrDefault(message => message.Date > someSecondsAgoUnixTimestamp) ?? new TLMessage();
+        }
+
+        private async Task<IEnumerable<TelegramContactResponse>> GetContactsFromChatAsync(TelegramClient client)
+        {
+            _logger.LogInformation("Getting the contacts from dialogs chats.");
+
+            var dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+            return dialogs?.Chats
+                    .OfType<TLChat>()
+                    .Select(chat => BuildTelegramResponse(chat)) ?? new List<TelegramContactResponse>();
+        }
+
+        private async Task<IEnumerable<TelegramContactResponse>> GetContactsAsync(TelegramClient client)
+        {
+            _logger.LogDebug("Getting the contacts.");
+
+            var contacts = await client.GetContactsAsync();
+            return contacts?.Users
+                .OfType<TLUser>()
+                .Select(user => BuildTelegramResponse(user)) ?? new List<TelegramContactResponse>();
         }
     }
 }

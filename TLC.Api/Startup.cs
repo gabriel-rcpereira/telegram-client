@@ -1,15 +1,20 @@
-﻿using System;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Quartz;
 using Quartz.Impl;
-using TLC.Api.Configuration.Telegram;
+using System.Diagnostics;
+using System.IO;
+using TLC.Api.Configurations.Telegram;
+using TLC.Api.Factories;
+using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Jobs;
+using TLC.Api.Jobs.Factories;
 using TLC.Api.Models.Mappers;
 using TLC.Api.Services;
 using TLC.Api.Services.Contracts;
@@ -35,6 +40,8 @@ namespace TLC.Api
 
             // configurations
             services.Configure<TelegramConfiguration>(_configuration.GetSection($"{TelegramAppConfiguration}"));
+            // logging
+            services.AddLogging(logging => logging.AddFile(GetFileLogPath(), LogLevel.Information));
 
             ConfigureDepencyInjection(services);
             ConfigureSchedule(services.BuildServiceProvider());            
@@ -47,7 +54,6 @@ namespace TLC.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
             app.UseMvc();
         }
 
@@ -64,9 +70,11 @@ namespace TLC.Api
 
         private static void ConfigureDepencyInjection(IServiceCollection services)
         {
-            // DI
+            // di
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IContactService, ContactService>();
+            services.AddTransient<INewService, NewsService>();
+            services.AddTransient<ITelegramClientFactory, TelegramClientFactory>();
             services.AddTransient<ITelegramHelper, TelegramHelper>();
             // job
             services.AddTransient<NewsJob>();
@@ -87,7 +95,7 @@ namespace TLC.Api
                     .Build(),
                 trigger);
             scheduler.JobFactory = new JobFactory(serviceProvider);
-            //scheduler.Start();
+            scheduler.Start();
         }
 
         private static ITrigger CreateTrigger()
@@ -99,6 +107,23 @@ namespace TLC.Api
                                 .WithIntervalInSeconds(45)
                                 .RepeatForever())
                             .Build();
+        }
+
+        private string GetFileLogPath()
+        {
+            var logFileTxt = "tlcApi.log";
+
+            if (Debugger.IsAttached)
+            {
+                var currentDirectory = Directory.GetCurrentDirectory();
+                return (currentDirectory.LastIndexOf(Path.DirectorySeparatorChar) == currentDirectory.Length - 1 ?
+                    currentDirectory :
+                    currentDirectory + Path.DirectorySeparatorChar) + logFileTxt;
+            }
+            else
+            {
+                return $@"C:\ProgramData\Temp\{logFileTxt}";
+            }
         }
     }
 }
