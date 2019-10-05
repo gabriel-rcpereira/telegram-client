@@ -1,4 +1,6 @@
-﻿namespace TLC.Api.Models.Requests
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TLC.Api.Models.Requests
 {
     public class ClientRequest
     {

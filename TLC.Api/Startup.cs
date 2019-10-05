@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using Quartz;
 using Quartz.Impl;
 using System.Diagnostics;
@@ -36,6 +37,7 @@ namespace TLC.Api
         {
             services.AddMvcCore()
                 .AddJsonFormatters()
+                .AddApiExplorer()
                 .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_2_2);
 
             // configurations
@@ -44,7 +46,12 @@ namespace TLC.Api
             services.AddLogging(logging => logging.AddFile(GetFileLogPath(), LogLevel.Information));
 
             ConfigureDepencyInjection(services);
-            ConfigureSchedule(services.BuildServiceProvider());            
+            ConfigureSchedule(services.BuildServiceProvider());
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "TelegramApp Client", Version = "v1" });
+            });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -54,6 +61,11 @@ namespace TLC.Api
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TelegramApi");
+            });
             app.UseMvc();
         }
 
@@ -71,11 +83,11 @@ namespace TLC.Api
         private static void ConfigureDepencyInjection(IServiceCollection services)
         {
             // di
+            services.AddTransient<ITelegramClientFactory, TelegramClientFactory>();
+            services.AddTransient<ITelegramHelper, TelegramHelper>();
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IContactService, ContactService>();
             services.AddTransient<INewService, NewsService>();
-            services.AddTransient<ITelegramClientFactory, TelegramClientFactory>();
-            services.AddTransient<ITelegramHelper, TelegramHelper>();
             // job
             services.AddTransient<NewsJob>();
             // mapper
