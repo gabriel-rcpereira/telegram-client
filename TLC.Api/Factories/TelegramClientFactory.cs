@@ -8,7 +8,7 @@ namespace TLC.Api.Factories
     {
         private readonly ILogger _logger;
 
-        public TelegramClientFactory(ILogger logger)
+        public TelegramClientFactory(ILogger<TelegramClientFactory> logger)
         {
             _logger = logger;
         }
