@@ -24,26 +24,26 @@ namespace TLC.Api.Controllers
 
         [HttpPost("messages")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> PostForwardDailyMessageAsync()
+        public async Task<IActionResult> PostForwardDailyChannelMessageAsync()
         {
-            _logger.LogInformation("Forwarding daily message.");
+            _logger.LogInformation("Post request to forward daily channel message.");
             await _clientService.ForwardDailyChannelMessageAsync();
             return Ok();
         }
 
         [HttpPost("codes")]
         [ProducesResponseType(typeof(ClientResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> PostSendCodeRequestToClientAsync()
+        public async Task<IActionResult> PostStartAuthenticationAsync()
         {
-            _logger.LogInformation("Sending code request to client.");
+            _logger.LogInformation("Posting starting authentication using the parameters configured.");
             return Ok(await _clientService.StartAuthenticationAsync());
         }
 
         [HttpPut("codes")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> PutCodeRequestedAsync([FromBody] ClientRequest clientRequest)
+        public async Task<IActionResult> PutMakeAuthenticationAsync([FromBody] ClientRequest clientRequest)
         {
-            _logger.LogInformation("Updating code requested.");
+            _logger.LogInformation("Puting the client code to make the authentication.");
             await _clientService.MakeAuthenticationAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }

@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using TLC.Api.Configurations.Telegram;
 using TLC.Api.Factories;
+using TLC.Api.Factories.Contracts;
 using TLC.Api.Helpers;
 using TLC.Api.Helpers.Contracts;
 using TLC.Api.Jobs;
