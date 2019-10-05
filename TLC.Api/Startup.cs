@@ -51,7 +51,6 @@ namespace TLC.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            //app.UseHttpsRedirection();
             app.UseMvc();
         }
 
@@ -71,6 +70,7 @@ namespace TLC.Api
             // di
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IContactService, ContactService>();
+            services.AddTransient<INewService, NewsService>();
             services.AddTransient<ITelegramHelper, TelegramHelper>();
             // job
             services.AddTransient<NewsJob>();
