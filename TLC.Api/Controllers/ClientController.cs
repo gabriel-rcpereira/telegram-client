@@ -27,7 +27,7 @@ namespace TLC.Api.Controllers
         public async Task<IActionResult> PostForwardDailyMessageAsync()
         {
             _logger.LogInformation("Forwarding daily message.");
-            await _clientService.ForwardDailyMessageAsync();
+            await _clientService.ForwardDailyChannelMessageAsync();
             return Ok();
         }
 
@@ -36,7 +36,7 @@ namespace TLC.Api.Controllers
         public async Task<IActionResult> PostSendCodeRequestToClientAsync()
         {
             _logger.LogInformation("Sending code request to client.");
-            return Ok(await _clientService.SendCodeRequestToClientAsync());
+            return Ok(await _clientService.StartAuthenticationAsync());
         }
 
         [HttpPut("codes")]
@@ -44,7 +44,7 @@ namespace TLC.Api.Controllers
         public async Task<IActionResult> PutCodeRequestedAsync([FromBody] ClientRequest clientRequest)
         {
             _logger.LogInformation("Updating code requested.");
-            await _clientService.UpdateCodeAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
+            await _clientService.MakeAuthenticationAsync(clientRequest.PhoneCodeHash, clientRequest.Code);
             return Ok();
         }
     }

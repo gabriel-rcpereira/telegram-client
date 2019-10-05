@@ -24,19 +24,19 @@ namespace TLC.Api.Services
             _mapper = mapper;
         }
 
-        async Task IClientService.ForwardDailyMessageAsync()
+        async Task IClientService.ForwardDailyChannelMessageAsync()
         {
             await _telegramHelper.ForwardDailyChannelMessageAsync(_mapper.Map<TelegramHelperVo>(_telegramConfiguration));
         }
 
-        async Task<ClientResponse> IClientService.SendCodeRequestToClientAsync()
+        async Task<ClientResponse> IClientService.StartAuthenticationAsync()
         {
             return _mapper.Map<ClientResponse>(
                 await _telegramHelper.StartAuthenticationAsync(
                     _mapper.Map<TelegramHelperVo>(_telegramConfiguration)));
         }
 
-        async Task IClientService.UpdateCodeAsync(string phoneCodeHash, string code)
+        async Task IClientService.MakeAuthenticationAsync(string phoneCodeHash, string code)
         {
             var telegramHelperVo = _mapper.Map<TelegramHelperVo>(_telegramConfiguration);
             telegramHelperVo.ConnectionVo = new ConnectionVo(phoneCodeHash, code);
